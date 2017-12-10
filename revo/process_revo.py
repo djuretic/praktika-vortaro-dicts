@@ -13,7 +13,7 @@ def stringify_children(node):
         s = ''
     for child in node:
         s += ET.tostring(child, encoding='unicode')
-    return s.strip()
+    return ' '.join(s.strip().replace("\n", "").split())
 
 
 def extract_translations(node):
@@ -45,7 +45,7 @@ def create_db():
     conn = sqlite3.connect('vortaro.db')
     c = conn.cursor()
     c.execute('DROP TABLE if exists words')
-    c.execute('CREATE TABLE words (base text, word text, definition text) ')
+    c.execute('CREATE TABLE words (id integer primary key, base text, word text, definition text) ')
     c.close()
     return conn
 
@@ -57,7 +57,8 @@ def get_main_word(mrk):
 
 @click.command()
 @click.option('--word')
-def main(word):
+@click.option('--verbose', is_flag=True)
+def main(word, verbose):
     conn = create_db()
     c = conn.cursor()
 
@@ -76,7 +77,6 @@ def main(word):
 
             # print(article)
             xml_parser = ET.XMLParser()
-            print(xml_parser.entity)
             for entity, value in entities_dict().items():
                 xml_parser.entity[entity] = value
             tree = ET.fromstring(article, parser=xml_parser)
@@ -84,7 +84,8 @@ def main(word):
             for art in tree.findall('art'):
                 main_word = art.find('kap/rad')
                 # main_word_txt = (main_word.text + main_word.tail).replace("/", "")
-                print(main_word)
+                if verbose:
+                    print(main_word)
 
                 for drv in art.findall('drv'):
                     # Example: afekcii has <dif> here
@@ -113,7 +114,10 @@ def main(word):
                         dif_text = stringify_children(dif)
                         # TODO numbering, anchor to mrk name
                         meanings.append(dif_text)
-                        print(mrk, use, dif_text)
+                        if verbose:
+                            print(mrk, use, dif_text)
+                        else:
+                            print(mrk)
 
                         # print(snc.get('mrk'), ''.join(dif.itertext()))
 
