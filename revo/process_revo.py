@@ -5,14 +5,19 @@ from lxml import etree
 import click
 
 # https://stackoverflow.com/a/28173933
-def stringify_children(node):
+def stringify_children(node, word=None):
     if node is None:
         return ''
     s = node.text
     if s is None:
         s = ''
     for child in node:
-        s += ET.tostring(child, encoding='unicode')
+        if child.tag == 'tld' and word is not None:
+            s += word
+            if child.tail:
+                s += child.tail
+        else:
+            s += ET.tostring(child, encoding='unicode')
     return ' '.join(s.strip().replace("\n", "").split())
 
 
@@ -55,12 +60,75 @@ def get_main_word(mrk):
     return parts[1].replace('0', parts[0])
 
 
+def parse_article(filename, cursor, verbose=False):
+    with open(filename) as f:
+        article = f.read()
+
+    xml_parser = ET.XMLParser()
+    for entity, value in entities_dict().items():
+        xml_parser.entity[entity] = value
+    tree = ET.fromstring(article, parser=xml_parser)
+
+    for art in tree.findall('art'):
+        main_word = art.find('kap/rad')
+        # main_word_txt = (main_word.text + main_word.tail).replace("/", "")
+        if verbose:
+            print(main_word)
+
+        for drv in art.findall('drv'):
+            # Example: afekcii has <dif> here
+            meanings = []
+            dif = drv.find('dif')
+            mrk = drv.get('mrk')
+            # TODO uppercase if it's a name
+            main_word_txt = get_main_word(mrk)
+            if dif is not None:
+                meanings.append(stringify_children(dif))
+            # TODO initial
+            # word = drv.find('kap')
+            # print(word.find('tld').tail)
+
+            # TODO drv also has dif
+
+            for snc in drv.findall('snc'):
+                meanings.append(parse_snc(snc, drv, verbose))
+
+            cursor.execute('INSERT into words (base, word, definition) values (?, ?, ?)', (main_word_txt, mrk, '\n---\n'.join(meanings)))
+            extract_translations(drv)
+
+
+def parse_snc(snc, drv, verbose=False):
+    mrk = snc.get('mrk') or drv.get('mrk')
+    radix = mrk.split('.')[0]
+    # TODO markup! Example word: abdiki, adekva.0a.KOMUNE
+    dif = snc.find('dif')
+    if dif is None:
+        dif = snc.find('./refgrp[@tip="dif"]')
+        if dif is None:
+            dif = snc.find('./ref[@tip="dif"]')
+            # TODO read ekz tags, example: afekci.0i.MED
+    dif_text = stringify_children(dif, radix)
+
+    uzo = snc.find('uzo')
+    if uzo is not None:
+        dif_text = uzo.text + " " + dif_text
+    # TODO numbering, anchor to mrk name
+    if verbose:
+        print(mrk, uzo, dif_text)
+    else:
+        print(mrk)
+
+    # print(snc.get('mrk'), ''.join(dif.itertext()))
+    extract_translations(snc)
+    return dif_text
+
+
 @click.command()
 @click.option('--word')
 @click.option('--verbose', is_flag=True)
 def main(word, verbose):
     conn = create_db()
-    c = conn.cursor()
+    cursor = conn.cursor()
 
     try:
         files = glob.glob('./xml/*.xml')
@@ -68,69 +136,10 @@ def main(word, verbose):
         for filename in files:
             if word and word not in filename:
                 continue
-            article = None
-            with open(filename) as f:
-                article = f.read()
-
-            with open('output.xml', 'w') as f:
-                f.write(article)
-
-            # print(article)
-            xml_parser = ET.XMLParser()
-            for entity, value in entities_dict().items():
-                xml_parser.entity[entity] = value
-            tree = ET.fromstring(article, parser=xml_parser)
-
-            for art in tree.findall('art'):
-                main_word = art.find('kap/rad')
-                # main_word_txt = (main_word.text + main_word.tail).replace("/", "")
-                if verbose:
-                    print(main_word)
-
-                for drv in art.findall('drv'):
-                    # Example: afekcii has <dif> here
-                    meanings = []
-                    dif = drv.find('dif')
-                    if dif is not None:
-                        meanings.append(stringify_children(dif))
-                    # TODO initial
-                    # word = drv.find('kap')
-                    # print(word.find('tld').tail)
-
-                    # TODO drv also has dif
-
-                    for snc in drv.findall('snc'):
-                        mrk = snc.get('mrk') or drv.get('mrk')
-                        use = snc.find('uzo')
-                        if use:
-                            use = use.text
-                        # TODO markup! Example word: abdiki, adekva.0a.KOMUNE
-                        dif = snc.find('dif')
-                        if dif is None:
-                            dif = snc.find('./refgrp[@tip="dif"]')
-                            if dif is None:
-                                dif = snc.find('./ref[@tip="dif"]')
-                                # TODO read ekz tags, example: afekci.0i.MED
-                        dif_text = stringify_children(dif)
-                        # TODO numbering, anchor to mrk name
-                        meanings.append(dif_text)
-                        if verbose:
-                            print(mrk, use, dif_text)
-                        else:
-                            print(mrk)
-
-                        # print(snc.get('mrk'), ''.join(dif.itertext()))
-
-                        extract_translations(snc)
-
-                    mrk = drv.get('mrk')
-                    # TODO uppercase if it's a name
-                    main_word_txt = get_main_word(mrk)
-                    c.execute('INSERT into words (base, word, definition) values (?, ?, ?)', (main_word_txt, mrk, '\n---\n'.join(meanings)))
-                    extract_translations(drv)
+            parse_article(filename, cursor, verbose)
     finally:
         conn.commit()
-        c.close()
+        cursor.close()
         conn.close()
 
 
