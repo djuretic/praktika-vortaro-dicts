@@ -4,21 +4,38 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 import click
 
-# https://stackoverflow.com/a/28173933
-def stringify_children(node, word=None):
+
+def stringify_children(node, word=None, first=True):
+    # print(node, "Word: ", word)
     if node is None:
         return ''
     s = node.text
     if s is None:
         s = ''
+    if node.tag in ['adm', 'bld', 'fnt']:
+        # Ignore them
+        if node.tail:
+            s += node.tail
+        return s
+    elif node.tag == 'tld':
+        # Replace with head word
+        res = word or ''
+        if node.tail:
+            res += node.tail
+        return res
+
+    has_child = False
     for child in node:
-        if child.tag == 'tld' and word is not None:
-            s += word
-            if child.tail:
-                s += child.tail
-        else:
-            s += ET.tostring(child, encoding='unicode')
-    return ' '.join(s.strip().replace("\n", "").split())
+        has_child = True
+        s += stringify_children(child, word, first=False)
+
+    if not has_child and node.tail:
+        s += node.tail
+
+    # print(node, "Word: ", word, "Res:", s)
+    if first:
+        return ' '.join(s.strip().replace("\n", "").split())
+    return s
 
 
 def extract_translations(node):
