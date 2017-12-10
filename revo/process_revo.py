@@ -3,6 +3,7 @@ import glob
 import xml.etree.ElementTree as ET
 from lxml import etree
 import click
+from pygtrie import CharTrie
 
 
 def stringify_children(node, word=None, first=True):
@@ -86,32 +87,37 @@ def parse_article(filename, cursor, verbose=False):
         xml_parser.entity[entity] = value
     tree = ET.fromstring(article, parser=xml_parser)
 
-    for art in tree.findall('art'):
-        main_word = art.find('kap/rad')
-        # main_word_txt = (main_word.text + main_word.tail).replace("/", "")
-        if verbose:
-            print(main_word)
+    art = tree.find('art')
+    main_word = art.find('kap/rad')
+    # main_word_txt = (main_word.text + main_word.tail).replace("/", "")
+    if verbose:
+        print(main_word)
 
-        for drv in art.findall('drv'):
-            # Example: afekcii has <dif> here
-            meanings = []
-            dif = drv.find('dif')
-            mrk = drv.get('mrk')
-            # TODO uppercase if it's a name
-            main_word_txt = get_main_word(mrk)
-            if dif is not None:
-                meanings.append(stringify_children(dif))
-            # TODO initial
-            # word = drv.find('kap')
-            # print(word.find('tld').tail)
+    row_id = None
+    found_words = []
+    for drv in art.findall('drv'):
+        # Example: afekcii has <dif> here
+        meanings = []
+        dif = drv.find('dif')
+        mrk = drv.get('mrk')
+        # TODO uppercase if it's a name
+        main_word_txt = get_main_word(mrk)
+        found_words.append(main_word_txt)
+        if dif is not None:
+            meanings.append(stringify_children(dif))
+        # TODO initial
+        # word = drv.find('kap')
+        # print(word.find('tld').tail)
 
-            # TODO drv also has dif
+        # TODO drv also has dif
 
-            for snc in drv.findall('snc'):
-                meanings.append(parse_snc(snc, drv, verbose))
+        for snc in drv.findall('snc'):
+            meanings.append(parse_snc(snc, drv, verbose))
 
-            cursor.execute('INSERT into words (base, word, definition) values (?, ?, ?)', (main_word_txt, mrk, '\n---\n'.join(meanings)))
-            extract_translations(drv)
+        cursor.execute('INSERT into words (base, word, definition) values (?, ?, ?)', (main_word_txt, mrk, '\n---\n'.join(meanings)))
+        row_id = cursor.lastrowid
+        extract_translations(drv)
+    return {'id': row_id, 'words': found_words}
 
 
 def parse_snc(snc, drv, verbose=False):
@@ -124,6 +130,7 @@ def parse_snc(snc, drv, verbose=False):
         if dif is None:
             dif = snc.find('./ref[@tip="dif"]')
             # TODO read ekz tags, example: afekci.0i.MED
+    # TODO parse subsnc and multiple uzo (a1.xml)
     dif_text = stringify_children(dif, radix)
 
     uzo = snc.find('uzo')
@@ -146,6 +153,7 @@ def parse_snc(snc, drv, verbose=False):
 def main(word, verbose):
     conn = create_db()
     cursor = conn.cursor()
+    trie = CharTrie()
 
     try:
         files = glob.glob('./xml/*.xml')
@@ -153,7 +161,9 @@ def main(word, verbose):
         for filename in files:
             if word and word not in filename:
                 continue
-            parse_article(filename, cursor, verbose)
+            res = parse_article(filename, cursor, verbose)
+            for found_word in res['words']:
+                trie[found_word] = res['id']
     finally:
         conn.commit()
         cursor.close()

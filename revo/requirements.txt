@@ -2,3 +2,4 @@ ipython
 lxml
 pytest
 click
+pygtrie
