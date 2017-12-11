@@ -1,3 +1,4 @@
+import re
 import sqlite3
 import glob
 import xml.etree.ElementTree as ET
@@ -81,8 +82,14 @@ def create_db():
 
 
 def get_main_word(mrk):
+    mrk = add_hats(mrk)
     parts = mrk.split('.')
-    return add_hats(parts[1].replace('0', parts[0]))
+    pos = parts[1].index('0')
+
+    if pos and parts[1][pos-1].isupper():
+        parts[0] = parts[0].capitalize()
+        return re.sub('.0', parts[0], parts[1])
+    return parts[1].replace('0', parts[0])
 
 
 def parse_article(filename, num_article, cursor, verbose=False):

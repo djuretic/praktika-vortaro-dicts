@@ -21,7 +21,7 @@ def add_hats(word):
     pos = 0
     while pos < len(word) - 1:
         char = word[pos]
-        if char in MAPPING.keys() and word[pos+1] == 'x':
+        if char in MAPPING.keys() and word[pos+1] in ('x', 'X'):
             res += MAPPING[char]
             pos += 2
         else:

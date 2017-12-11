@@ -11,17 +11,23 @@ def test_mrk_suffix():
     assert get_main_word('lob.tri0ulo.PAL') == 'trilobulo'
 
 
+def test_mrk_uppercase():
+    assert get_main_word('germani.G0o') == 'Germanio'
+    assert get_main_word('gxibuti.GX0o') == 'Ĝibutio'
+
+
 def test_stringify_xml():
-    assert 'Hola' == stringify_children(ET.fromstring('<a>   Hola  </a>'))
-    assert 'Hola' == stringify_children(ET.fromstring('<a><b>Ho</b>la</a>'))
+    assert stringify_children(ET.fromstring('<a>   Hola  </a>')) == 'Hola'
+    assert stringify_children(ET.fromstring('<a><b>Ho</b>la</a>')) == 'Hola'
 
 
 def test_stringify_xml_newlines():
-    assert 'Saluton mondo' == stringify_children(ET.fromstring("<i>\n<b>Saluton\n</b> mon\ndo</i>"))
+    assert stringify_children(ET.fromstring("<i>\n<b>Saluton\n</b> mon\ndo</i>")) == \
+        'Saluton mondo'
 
 
 def test_stringify_xml_whitespace():
-    assert 'Bonan tagon' == stringify_children(ET.fromstring('<a>Bonan    tagon</a>'))
+    assert stringify_children(ET.fromstring('<a>Bonan    tagon</a>')) == 'Bonan tagon'
 
 
 def test_snc():
@@ -32,27 +38,27 @@ def test_snc():
       <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
     </dif>
     </snc>"""
-    assert 'ARKI Supera plata parto de kolona kapitelo.' == parse_snc(ET.fromstring(xml), None)
+    assert parse_snc(ET.fromstring(xml), None) == 'ARKI Supera plata parto de kolona kapitelo.'
 
 
 def test_snc_replace_tld():
     xml = """<snc mrk="abat.0o">
     <dif>Monaĥejestro de <tld/>ejo.</dif>
     </snc>"""
-    assert 'Monaĥejestro de abatejo.' == parse_snc(ET.fromstring(xml), None)
+    assert parse_snc(ET.fromstring(xml), None) == 'Monaĥejestro de abatejo.'
 
 
 def test_snc_no_tail_after_tld():
-    assert 'abat' == parse_snc(ET.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), None)
+    assert parse_snc(ET.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), None) == 'abat'
 
 
 def test_snc_ignore_fnt():
     xml = '<snc mrk="-"><dif>Difino <ekz>Frazo<fnt><aut>Iu</aut></fnt>.</ekz></dif></snc>'
-    assert 'Difino Frazo.' == parse_snc(ET.fromstring(xml), None)
+    assert parse_snc(ET.fromstring(xml), None) == 'Difino Frazo.'
 
 
 def test_add_hats():
-    assert '' == add_hats('')
-    assert 'saluton' == add_hats('saluton')
-    assert 'serĉi' == add_hats('sercxi')
-    assert 'ĈŜĜĴĤŬĉŝĝĵĥŭ' == add_hats('CxSxGxJxHxUxcxsxgxjxhxux')
+    assert add_hats('') == ''
+    assert add_hats('saluton') == 'saluton'
+    assert add_hats('sercxi') == 'serĉi'
+    assert add_hats('CxSxGxJxHxUxcxsxgxjxhxux') == 'ĈŜĜĴĤŬĉŝĝĵĥŭ'
