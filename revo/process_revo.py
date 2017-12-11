@@ -70,7 +70,12 @@ def create_db():
     conn = sqlite3.connect('vortaro.db')
     c = conn.cursor()
     c.execute('DROP TABLE if exists words')
-    c.execute('CREATE TABLE words (id integer primary key, base text, word text, definition text) ')
+    c.execute("""CREATE TABLE words (
+        id integer primary key,
+        article_id integer,
+        word text,
+        mark text,
+        definition text) """)
     c.close()
     return conn
 
@@ -80,7 +85,7 @@ def get_main_word(mrk):
     return add_hats(parts[1].replace('0', parts[0]))
 
 
-def parse_article(filename, cursor, verbose=False):
+def parse_article(filename, num_article, cursor, verbose=False):
     with open(filename) as f:
         article = f.read()
 
@@ -116,7 +121,9 @@ def parse_article(filename, cursor, verbose=False):
         for snc in drv.findall('snc'):
             meanings.append(parse_snc(snc, drv, verbose))
 
-        cursor.execute('INSERT into words (base, word, definition) values (?, ?, ?)', (main_word_txt, mrk, '\n---\n'.join(meanings)))
+        cursor.execute("""INSERT into words (
+            article_id, word, mark, definition)
+            values (?, ?, ?, ?)""", (num_article, main_word_txt, mrk, '\n---\n'.join(meanings)))
         row_id = cursor.lastrowid
         extract_translations(drv)
     return {'id': row_id, 'words': found_words}
@@ -160,10 +167,12 @@ def main(word, verbose):
     try:
         files = glob.glob('./xml/*.xml')
         files.sort()
+        num_article = 1
         for filename in files:
             if word and word not in filename:
                 continue
-            res = parse_article(filename, cursor, verbose)
+            res = parse_article(filename, num_article, cursor, verbose)
+            num_article += 1
             for found_word in res['words']:
                 trie[found_word] = res['id']
     finally:
