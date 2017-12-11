@@ -5,6 +5,8 @@ from lxml import etree
 import click
 from pygtrie import CharTrie
 
+from utils import add_hats
+
 
 def stringify_children(node, word=None, first=True):
     # print(node, "Word: ", word)
@@ -75,7 +77,7 @@ def create_db():
 
 def get_main_word(mrk):
     parts = mrk.split('.')
-    return parts[1].replace('0', parts[0])
+    return add_hats(parts[1].replace('0', parts[0]))
 
 
 def parse_article(filename, cursor, verbose=False):

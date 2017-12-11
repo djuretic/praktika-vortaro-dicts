@@ -1,4 +1,5 @@
 from process_revo import get_main_word, stringify_children, parse_snc
+from utils import add_hats
 import xml.etree.ElementTree as ET
 
 
@@ -48,3 +49,10 @@ def test_snc_no_tail_after_tld():
 def test_snc_ignore_fnt():
     xml = '<snc mrk="-"><dif>Difino <ekz>Frazo<fnt><aut>Iu</aut></fnt>.</ekz></dif></snc>'
     assert 'Difino Frazo.' == parse_snc(ET.fromstring(xml), None)
+
+
+def test_add_hats():
+    assert '' == add_hats('')
+    assert 'saluton' == add_hats('saluton')
+    assert 'serĉi' == add_hats('sercxi')
+    assert 'ĈŜĜĴĤŬĉŝĝĵĥŭ' == add_hats('CxSxGxJxHxUxcxsxgxjxhxux')
