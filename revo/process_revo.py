@@ -88,8 +88,10 @@ def get_main_word(mrk):
 
     if pos and parts[1][pos-1].isupper():
         parts[0] = parts[0].capitalize()
-        return re.sub('.0', parts[0], parts[1])
-    return parts[1].replace('0', parts[0])
+        word = re.sub('.0', parts[0], parts[1])
+    else:
+        word = parts[1].replace('0', parts[0])
+    return re.sub(r"(\w)([A-ZĈŜĜĤĴ])", r"\1 \2", word)
 
 
 def parse_article(filename, num_article, cursor, verbose=False):

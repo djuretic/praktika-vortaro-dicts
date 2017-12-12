@@ -16,6 +16,10 @@ def test_mrk_uppercase():
     assert get_main_word('gxibuti.GX0o') == 'Ĝibutio'
 
 
+def test_mrk_separation():
+    assert get_main_word('alask.A0aGolfo') == 'Alaska Golfo'
+
+
 def test_stringify_xml():
     assert stringify_children(ET.fromstring('<a>   Hola  </a>')) == 'Hola'
     assert stringify_children(ET.fromstring('<a><b>Ho</b>la</a>')) == 'Hola'
