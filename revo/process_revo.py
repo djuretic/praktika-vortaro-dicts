@@ -130,9 +130,12 @@ def parse_article(filename, num_article, cursor, verbose=False):
         for snc in drv.findall('snc'):
             meanings.append(parse_snc(snc, drv, verbose))
 
+        if len(meanings) > 1:
+            meanings = ["%d. %s" % (n+1, meaning) for n, meaning in enumerate(meanings)]
+
         cursor.execute("""INSERT into words (
             article_id, word, mark, definition)
-            values (?, ?, ?, ?)""", (num_article, main_word_txt, mrk, '\n---\n'.join(meanings)))
+            values (?, ?, ?, ?)""", (num_article, main_word_txt, mrk, '\n\n'.join(meanings)))
         row_id = cursor.lastrowid
         extract_translations(drv)
     return {'id': row_id, 'words': found_words}
@@ -148,13 +151,19 @@ def parse_snc(snc, drv, verbose=False):
         if dif is None:
             dif = snc.find('./ref[@tip="dif"]')
             # TODO read ekz tags, example: afekci.0i.MED
-    # TODO parse subsnc and multiple uzo (a1.xml)
+    # TODO parse multiple uzo (a1.xml)
     dif_text = stringify_children(dif, radix)
+
+    subsncs = snc.findall('subsnc')
+    subsncs = ["%s) %s" % (chr(ord('a')+n), parse_snc(subsnc, drv, verbose))
+               for n, subsnc in enumerate(subsncs)]
+    if subsncs:
+        dif_text += '\n\n'
+        dif_text += '\n\n'.join(subsncs)
 
     uzo = snc.find('uzo')
     if uzo is not None:
         dif_text = uzo.text + " " + dif_text
-    # TODO numbering, anchor to mrk name
     if verbose:
         print(mrk, uzo, dif_text)
     else:

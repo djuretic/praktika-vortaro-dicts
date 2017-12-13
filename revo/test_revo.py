@@ -61,6 +61,15 @@ def test_snc_ignore_fnt():
     assert parse_snc(ET.fromstring(xml), None) == 'Difino Frazo.'
 
 
+def test_subsnc():
+    xml = '''<snc mrk="-">
+        <dif>Uzata kiel:</dif>
+        <subsnc><dif>A</dif></subsnc>
+        <subsnc><dif>B</dif></subsnc>
+    </snc>'''
+    assert parse_snc(ET.fromstring(xml), ET.fromstring('<drv mrk="-"/>')) == "Uzata kiel:\n\na) A\n\nb) B"
+
+
 def test_add_hats():
     assert add_hats('') == ''
     assert add_hats('saluton') == 'saluton'
