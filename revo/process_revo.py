@@ -9,17 +9,18 @@ from pygtrie import CharTrie
 from utils import add_hats
 
 
-def stringify_children(node, word=None, first=True):
+def stringify_children(node, word=None, first=True, ignore=None):
     # print(node, "Word: ", word)
     if node is None:
         return ''
     s = node.text
     if s is None:
         s = ''
-    if node.tag in ['adm', 'bld', 'fnt']:
+    if node.tag in ['adm', 'bld', 'fnt'] or (ignore and node.tag in ignore):
         # Ignore them
+        s = ''
         if node.tail:
-            s += node.tail
+            s = node.tail
         return s
     elif node.tag == 'tld':
         # Replace with head word
@@ -31,7 +32,7 @@ def stringify_children(node, word=None, first=True):
     has_child = False
     for child in node:
         has_child = True
-        s += stringify_children(child, word, first=False)
+        s += stringify_children(child, word, first=False, ignore=ignore)
 
     if not has_child and node.tail:
         s += node.tail
@@ -111,6 +112,7 @@ def parse_article(filename, num_article, cursor, verbose=False):
 
     row_id = None
     found_words = []
+    # TODO parse ref (ekz. a1)
     for drv in art.findall('drv'):
         # Example: afekcii has <dif> here
         meanings = []
@@ -152,7 +154,7 @@ def parse_snc(snc, drv, verbose=False):
             dif = snc.find('./ref[@tip="dif"]')
             # TODO read ekz tags, example: afekci.0i.MED
     # TODO parse multiple uzo (a1.xml)
-    dif_text = stringify_children(dif, radix)
+    dif_text = stringify_children(dif, radix, ignore=['trd'])
 
     subsncs = snc.findall('subsnc')
     subsncs = ["%s) %s" % (chr(ord('a')+n), parse_snc(subsnc, drv, verbose))

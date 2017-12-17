@@ -61,6 +61,11 @@ def test_snc_ignore_fnt():
     assert parse_snc(ET.fromstring(xml), None) == 'Difino Frazo.'
 
 
+def test_snc_ignore_trd():
+    xml = '<snc mrk="-"><dif>Difino <ekz><ind>Frazo</ind>.<trd lng="hu">Trd</trd></ekz></dif></snc>'
+    assert parse_snc(ET.fromstring(xml), None) == 'Difino Frazo.'
+
+
 def test_subsnc():
     xml = '''<snc mrk="-">
         <dif>Uzata kiel:</dif>
