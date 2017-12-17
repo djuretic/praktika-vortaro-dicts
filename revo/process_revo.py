@@ -174,15 +174,15 @@ def parse_snc(snc, drv, verbose=False):
     else:
         print(mrk)
 
-    # print(snc.get('mrk'), ''.join(dif.itertext()))
     extract_translations(snc)
     return dif_text
 
 
 @click.command()
 @click.option('--word')
+@click.option('--limit', type=int)
 @click.option('--verbose', is_flag=True)
-def main(word, verbose):
+def main(word, limit, verbose):
     conn = create_db()
     cursor = conn.cursor()
     trie = CharTrie()
@@ -198,6 +198,9 @@ def main(word, verbose):
             num_article += 1
             for found_word in res['words']:
                 trie[found_word] = res['id']
+
+            if limit and num_article >= limit:
+                break
     finally:
         conn.commit()
         cursor.close()
