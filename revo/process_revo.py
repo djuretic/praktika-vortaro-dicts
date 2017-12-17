@@ -118,7 +118,6 @@ def parse_article(filename, num_article, cursor, verbose=False):
         meanings = []
         dif = drv.find('dif')
         mrk = drv.get('mrk')
-        # TODO uppercase if it's a name
         main_word_txt = get_main_word(mrk)
         found_words.append(main_word_txt)
         if dif is not None:
@@ -128,9 +127,14 @@ def parse_article(filename, num_article, cursor, verbose=False):
         # print(word.find('tld').tail)
 
         # TODO drv also has dif
+        # parse multiple uzo (example: a1.xml)
+        uzo_list = [t.text for t in drv.findall('uzo')]
+        uzo_txt = ''
+        if uzo_list:
+            uzo_txt = " ".join(uzo_list) + " "
 
         for snc in drv.findall('snc'):
-            meanings.append(parse_snc(snc, drv, verbose))
+            meanings.append(uzo_txt + parse_snc(snc, drv, verbose))
 
         if len(meanings) > 1:
             meanings = ["%d. %s" % (n+1, meaning) for n, meaning in enumerate(meanings)]
@@ -153,7 +157,6 @@ def parse_snc(snc, drv, verbose=False):
         if dif is None:
             dif = snc.find('./ref[@tip="dif"]')
             # TODO read ekz tags, example: afekci.0i.MED
-    # TODO parse multiple uzo (a1.xml)
     dif_text = stringify_children(dif, radix, ignore=['trd'])
 
     subsncs = snc.findall('subsnc')
