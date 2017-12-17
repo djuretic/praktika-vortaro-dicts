@@ -43,13 +43,34 @@ def stringify_children(node, word=None, first=True, ignore=None):
     return s
 
 
-def extract_translations(node):
-    return
+def extract_translations(node, mrk):
+    trads = {}
+
+    def read_translation(mrk, lng, trd):
+        trd_txt = stringify_children(trd)
+        # print(' ', mrk, lng, trd_txt)
+        if lng not in trads:
+            trads[lng] = []
+        trads[lng].append(trd_txt)
+
     for trd in node.findall('trd'):
-        print(node.get('mrk'), trd.get('lng'), trd.text)
+        read_translation(mrk, trd.get('lng'), trd)
     for trdgrp in node.findall('trdgrp'):
         for trd in trdgrp.findall('trd'):
-            print(node.get('mrk'), trdgrp.get('lng'), trd.text)
+            read_translation(mrk, trdgrp.get('lng'), trd)
+
+    # print(trads)
+    return trads
+
+
+def insert_translations(word_id, trads, cursor):
+    if not trads:
+        return
+    for lng, trad in trads.items():
+        cursor.execute(
+            "INSERT INTO translations (word_id, lng, translation) VALUES (?,?,?)",
+            (word_id, lng, " ".join(trad))
+        )
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
@@ -72,12 +93,25 @@ def create_db():
     conn = sqlite3.connect('vortaro.db')
     c = conn.cursor()
     c.execute('DROP TABLE if exists words')
-    c.execute("""CREATE TABLE words (
-        id integer primary key,
-        article_id integer,
-        word text,
-        mark text,
-        definition text) """)
+    c.execute("""
+        CREATE TABLE words (
+            id integer primary key,
+            article_id integer,
+            word text,
+            mark text,
+            definition text
+        )
+    """)
+
+    c.execute('DROP TABLE if exists translations')
+    c.execute("""
+        CREATE TABLE translations (
+            id integer primary key,
+            word_id integer,
+            lng text,
+            translation text
+        )
+    """)
     c.close()
     return conn
 
@@ -106,7 +140,6 @@ def parse_article(filename, num_article, cursor, verbose=False):
 
     art = tree.find('art')
     main_word = art.find('kap/rad')
-    # main_word_txt = (main_word.text + main_word.tail).replace("/", "")
     if verbose:
         print(main_word)
 
@@ -143,7 +176,9 @@ def parse_article(filename, num_article, cursor, verbose=False):
             article_id, word, mark, definition)
             values (?, ?, ?, ?)""", (num_article, main_word_txt, mrk, '\n\n'.join(meanings)))
         row_id = cursor.lastrowid
-        extract_translations(drv)
+        trads = extract_translations(drv, mrk)
+        insert_translations(row_id, trads, cursor)
+
     return {'id': row_id, 'words': found_words}
 
 
@@ -174,7 +209,8 @@ def parse_snc(snc, drv, verbose=False):
     else:
         print(mrk)
 
-    extract_translations(snc)
+    trads = extract_translations(snc, mrk)
+    # TODO insert
     return dif_text
 
 
