@@ -4,7 +4,6 @@ import glob
 import xml.etree.ElementTree as ET
 from lxml import etree
 import click
-from pygtrie import CharTrie
 
 from utils import add_hats
 
@@ -167,7 +166,7 @@ def parse_article(filename, num_article, cursor, verbose=False):
             uzo_txt = " ".join(uzo_list) + " "
 
         for snc in drv.findall('snc'):
-            meanings.append(uzo_txt + parse_snc(snc, drv, verbose))
+            meanings.append(uzo_txt + parse_snc(snc, drv, verbose)[0])
 
         if len(meanings) > 1:
             meanings = ["%d. %s" % (n+1, meaning) for n, meaning in enumerate(meanings)]
@@ -195,7 +194,7 @@ def parse_snc(snc, drv, verbose=False):
     dif_text = stringify_children(dif, radix, ignore=['trd'])
 
     subsncs = snc.findall('subsnc')
-    subsncs = ["%s) %s" % (chr(ord('a')+n), parse_snc(subsnc, drv, verbose))
+    subsncs = ["%s) %s" % (chr(ord('a')+n), parse_snc(subsnc, drv, verbose)[0])
                for n, subsnc in enumerate(subsncs)]
     if subsncs:
         dif_text += '\n\n'
@@ -210,8 +209,7 @@ def parse_snc(snc, drv, verbose=False):
         print(mrk)
 
     trads = extract_translations(snc, mrk)
-    # TODO insert
-    return dif_text
+    return (dif_text, trads)
 
 
 @click.command()
@@ -221,7 +219,6 @@ def parse_snc(snc, drv, verbose=False):
 def main(word, limit, verbose):
     conn = create_db()
     cursor = conn.cursor()
-    trie = CharTrie()
 
     try:
         files = glob.glob('./xml/*.xml')
@@ -230,10 +227,8 @@ def main(word, limit, verbose):
         for filename in files:
             if word and word not in filename:
                 continue
-            res = parse_article(filename, num_article, cursor, verbose)
+            parse_article(filename, num_article, cursor, verbose)
             num_article += 1
-            for found_word in res['words']:
-                trie[found_word] = res['id']
 
             if limit and num_article >= limit:
                 break

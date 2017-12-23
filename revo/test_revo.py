@@ -42,28 +42,28 @@ def test_snc():
       <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
     </dif>
     </snc>"""
-    assert parse_snc(ET.fromstring(xml), None) == 'ARKI Supera plata parto de kolona kapitelo.'
+    assert parse_snc(ET.fromstring(xml), None)[0] == 'ARKI Supera plata parto de kolona kapitelo.'
 
 
 def test_snc_replace_tld():
     xml = """<snc mrk="abat.0o">
     <dif>Monaĥejestro de <tld/>ejo.</dif>
     </snc>"""
-    assert parse_snc(ET.fromstring(xml), None) == 'Monaĥejestro de abatejo.'
+    assert parse_snc(ET.fromstring(xml), None)[0] == 'Monaĥejestro de abatejo.'
 
 
 def test_snc_no_tail_after_tld():
-    assert parse_snc(ET.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), None) == 'abat'
+    assert parse_snc(ET.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), None)[0] == 'abat'
 
 
 def test_snc_ignore_fnt():
     xml = '<snc mrk="-"><dif>Difino <ekz>Frazo<fnt><aut>Iu</aut></fnt>.</ekz></dif></snc>'
-    assert parse_snc(ET.fromstring(xml), None) == 'Difino Frazo.'
+    assert parse_snc(ET.fromstring(xml), None)[0] == 'Difino Frazo.'
 
 
 def test_snc_ignore_trd():
     xml = '<snc mrk="-"><dif>Difino <ekz><ind>Frazo</ind>.<trd lng="hu">Trd</trd></ekz></dif></snc>'
-    assert parse_snc(ET.fromstring(xml), None) == 'Difino Frazo.'
+    assert parse_snc(ET.fromstring(xml), None)[0] == 'Difino Frazo.'
 
 
 def test_subsnc():
@@ -72,7 +72,7 @@ def test_subsnc():
         <subsnc><dif>A</dif></subsnc>
         <subsnc><dif>B</dif></subsnc>
     </snc>'''
-    assert parse_snc(ET.fromstring(xml), ET.fromstring('<drv mrk="-"/>')) == "Uzata kiel:\n\na) A\n\nb) B"
+    assert parse_snc(ET.fromstring(xml), ET.fromstring('<drv mrk="-"/>'))[0] == "Uzata kiel:\n\na) A\n\nb) B"
 
 
 def test_add_hats():
