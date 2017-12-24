@@ -1,5 +1,7 @@
 *.zip
 *.db
 *.xml
+*.pyc
+__pycache__
 revo/*/
 !revo/parser
