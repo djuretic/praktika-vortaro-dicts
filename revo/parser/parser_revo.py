@@ -21,6 +21,20 @@ class Node:
             if nodes:
                 setattr(self, tag, nodes)
 
+    def parse_children(self, node):
+        self.text = [node.text]
+        for child in node:
+            # TODO check ind in gust.xml
+            if child.tag in ['fnt', 'ind']:
+                continue
+            tag_class = globals()[child.tag.title()]
+            self.text.append(tag_class(child))
+            self.text.append(child.tail)
+
+    def to_text(self):
+        # TODO
+        pass
+
 
 class Art(Node):
     tags = ['subart', 'drv', 'snc'] + EXTRA_TAGS
@@ -83,7 +97,7 @@ class Dif(Node):
     def __init__(self, node):
         super().__init__(node)
         # TODO stringify
-        self.text = node.text
+        self.parse_children(node)
 
 
 class Trd(Node):
@@ -98,6 +112,26 @@ class Trdgrp(Node):
     def __init__(self, node):
         super().__init__(node)
         self.lng = node.get('lng')
+
+
+class Ref(Node):
+    def __init__(self, node):
+        self.text = node.text
+        self.cel = node.get('cel')
+
+
+class Ekz(Node):
+    def __init__(self, node):
+        self.parse_children(node)
+
+
+class Tld(Node):
+    pass
+
+# found in amik.xml
+class Klr(Node):
+    def __init__(self, node):
+        self.parse_children(node)
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict():
@@ -133,6 +167,7 @@ def parse_article(filename):
 def main(word):
     art = parse_article('xml/%s.xml' % word)
     print(art)
+    print(art.to_text())
 
 if __name__ == '__main__':
     main()
