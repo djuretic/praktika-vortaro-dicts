@@ -55,11 +55,10 @@ class Art(Node):
         assert node.tag == 'art'
         rad = node.find('kap/rad')
         self.kap = (rad.text, rad.tail.strip())
-    
+
     def to_text(self):
-        res = [''.join(self.kap)]
         drv = [d.to_text() for d in self.drv]
-        res += drv
+        res = ''.join(drv)
         return res
 
 
@@ -81,10 +80,17 @@ class Drv(Node):
         super().__init__(node, extra_info)
         kap = node.find('kap/tld')
         self.kap = kap.tail
-    
+
     def to_text(self):
-        snc = [s.to_text() for s in self.snc]
-        return [self.kap, self.mrk, snc]
+        # TODO subdrv
+        meanings = []
+        for n, snc in enumerate(self.snc):
+            text = snc.to_text()
+            if len(self.snc) > 1:
+                text = "%s. %s" % (n+1, text)
+            meanings.append(text)
+        print(meanings)
+        return '\n\n'.join(meanings)
 
 
 class Subdrv(Node):
@@ -100,17 +106,26 @@ class Snc(Node):
         self.mrk = node.get('mrk')
         if not extra_info:
             extra_info = {}
-        extra_info['radix'] = self.mrk.split('.')[0]
+        # example: snc without mrk but drv has it (see zoni in zon.xml)
+        mrk = self.mrk or extra_info['radix']
+        extra_info['radix'] = mrk.split('.')[0]
         super().__init__(node, extra_info)
-        
-    
+
     def to_text(self):
-        uzo = ' '.join([u.to_text() for u in self.uzo])
-        dif = '\n'.join([d.to_text() for d in self.dif])
-        if uzo:
-            return '%s %s' % (uzo, dif)
-        else:
-            return dif
+        content = ''
+        if self.uzo:
+            content += ' '.join([u.to_text() for u in self.uzo]) + ' '
+        content += '\n'.join([d.to_text() for d in self.dif])
+
+        if self.subsnc:
+            content += '\n\n'
+            subs = []
+            for n, subsnc in enumerate(self.subsnc):
+                text = subsnc.to_text()
+                subs.append("%s) %s" % (chr(ord('a')+n), text))
+            content += '\n\n'.join(subs)
+
+        return content
 
 class Subsnc(Node):
     tags = EXTRA_TAGS
@@ -119,24 +134,33 @@ class Subsnc(Node):
         super().__init__(node, extra_info)
         self.mrk = node.get('mrk')
 
+    def to_text(self):
+        # TODO refactor (copied from Snc)
+        content = ''
+        if self.uzo:
+            content += ' '.join([u.to_text() for u in self.uzo]) + ' '
+        content += '\n'.join([d.to_text() for d in self.dif])
+        return content
+
 
 class Uzo(Node):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         # TODO tld tag
         self.text = node.text
-    
+
     def to_text(self):
         return self.text
 
 
+# TODO parse ekz tags
 class Dif(Node):
     tags = ['trd']
 
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
-    
+
     def to_text(self):
         parts = []
         for node in self.text:
@@ -144,7 +168,6 @@ class Dif(Node):
                 parts.append(node)
             else:
                 parts.append(node.to_text())
-        print("Dif", parts)
         return ''.join(parts).strip()
 
 
@@ -166,7 +189,7 @@ class Ref(Node):
     def __init__(self, node, extra_info=None):
         self.text = node.text
         self.cel = node.get('cel')
-    
+
     def to_text(self):
         # TODO include cel
         return self.text
@@ -179,15 +202,25 @@ class Ekz(Node):
 
 class Tld(Node):
     def __init__(self, node, extra_info=None):
-        self.radix = extra_info['radix']
+        self.radix = None
+        if extra_info:
+            self.radix = extra_info['radix']
 
     def to_text(self):
-        return self.radix
+        return self.radix or '-----'
 
 # found in amik.xml
 class Klr(Node):
     def __init__(self, node, extra_info=None):
         self.parse_children(node)
+
+# found in zon.xml
+class Frm(Node):
+    def __init__(self, node, extra_info=None):
+        self.text = node.text
+
+    def to_text(self):
+        return self.text
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict():

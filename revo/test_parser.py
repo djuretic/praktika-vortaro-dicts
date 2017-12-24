@@ -1,4 +1,4 @@
-from parser.revo import Snc
+from parser.revo import Art, Snc
 from lxml import etree
 import pytest
 
@@ -22,3 +22,24 @@ def test_snc_replace_tld(parser):
     <dif>Monaĥejestro de <tld/>ejo.</dif>
     </snc>"""
     assert Snc(etree.fromstring(xml, parser=parser)).to_text() == 'Monaĥejestro de abatejo.'
+
+
+def test_subsnc():
+    xml = '''<snc mrk="-">
+        <dif>Uzata kiel:</dif>
+        <subsnc><dif>A</dif></subsnc>
+        <subsnc><dif>B</dif></subsnc>
+    </snc>'''
+    assert Snc(etree.fromstring(xml)).to_text() == "Uzata kiel:\n\na) A\n\nb) B"
+
+def test_multiple_snc():
+    xml = '''<art>
+        <kap><rad>zon</rad>/o</kap>
+        <drv mrk="zon.0o">
+            <kap><ofc>*</ofc><tld/>o</kap>
+            <snc mrk="zon.0o.TEKS"><dif>A</dif></snc>
+            <snc mrk="zon.0o.korpo"><dif>B</dif></snc>
+        </drv>
+    </art>
+    '''
+    assert Art(etree.fromstring(xml)).to_text() == "1. A\n\n2. B"
