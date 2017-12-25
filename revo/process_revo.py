@@ -147,9 +147,9 @@ def parse_article(filename, num_article, cursor, verbose=False):
         row_id = cursor.lastrowid
 
         if verbose:
-            print(main_word_txt, drv.mrk)
+            print(filename, drv.mrk, row_id)
         else:
-            print(main_word_txt)
+            print(filename, drv.mrk)
         # trads = extract_translations(drv, drv.mrk)
         # insert_translations(row_id, trads, cursor)
 

@@ -2,7 +2,7 @@ import click
 import xml.etree.ElementTree as ET
 from lxml import etree
 
-EXTRA_TAGS = ['uzo', 'dif', 'trd', 'trdgrp']
+EXTRA_TAGS = ['uzo', 'dif', 'trd', 'trdgrp', 'refgrp', 'ref', 'rim']
 
 
 def remove_extra_whitespace(string):
@@ -62,9 +62,12 @@ class TextNode(Node):
                 parts.append(node)
             else:
                 parts.append(node.to_text())
-        # print(self.text)
-        # print(parts)
-        return ''.join(parts).strip()
+        try:
+            return ''.join(parts).strip()
+        except:
+            print(self.text)
+            print(parts)
+            raise
 
 
 class Art(Node):
@@ -104,15 +107,20 @@ class Drv(Node):
         self.kap = kap.tail
 
     def to_text(self):
-        # TODO subdrv
+        # TODO subdrv, ref at the end (a1.xml)
         meanings = []
+        content = ''
         for n, snc in enumerate(self.snc):
             text = snc.to_text()
             if len(self.snc) > 1:
                 text = "%s. %s" % (n+1, text)
             meanings.append(text)
-        return '\n\n'.join(meanings)
+        content += '\n\n'.join(meanings)
 
+        if self.rim:
+            assert len(self.rim) == 1
+            content += "\n\n%s" % self.rim[0].to_text()
+        return content
 
 class Subdrv(Node):
     tags = ['snc']
@@ -145,6 +153,11 @@ class Snc(Node):
                 text = subsnc.to_text()
                 subs.append("%s) %s" % (chr(ord('a')+n), text))
             content += '\n\n'.join(subs)
+
+        if self.refgrp:
+            content += ''.join([r.to_text() for r in self.refgrp])
+        if self.ref:
+            content += ''.join([r.to_text() for r in self.ref])
 
         return content
 
@@ -195,19 +208,20 @@ class Trdgrp(Node):
         super().__init__(node, extra_info)
         self.lng = node.get('lng')
 
-
-class Ref(Node):
-    def __init__(self, node, extra_info=None):
-        self.text = node.text
-        self.cel = node.get('cel')
-
     def to_text(self):
-        # TODO include cel
-        return self.text
+        return ''
+
+
+class Ref(TextNode):
+    pass
 
 
 class Refgrp(TextNode):
     tags = ['ref']
+
+
+class Sncref(TextNode):
+    pass
 
 
 class Ekz(TextNode):
@@ -224,17 +238,32 @@ class Tld(Node):
         return self.radix or '-----'
 
 # found in amik.xml
-class Klr(Node):
-    def __init__(self, node, extra_info=None):
-        self.parse_children(node)
+class Klr(TextNode):
+    pass
+
+
+class Rim(TextNode):
+    def to_text(self):
+        string = super().to_text()
+        return "Rim. %s" % string
+
+
+class Aut(TextNode):
+    def to_text(self):
+        return "[%s]" % super().to_text()
 
 # found in zon.xml
-class Frm(Node):
-    def __init__(self, node, extra_info=None):
-        self.text = node.text
+class Frm(TextNode):
+    pass
 
-    def to_text(self):
-        return self.text
+
+class K(TextNode):
+    pass
+
+
+# TODO bold format (example: abstrakta)
+class Em(TextNode):
+    pass
 
 
 class Ctl(TextNode):
