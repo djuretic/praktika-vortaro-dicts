@@ -33,19 +33,38 @@ class Node:
 
     def parse_children(self, node, extra_info=None):
         self.text = []
-        if node.text.strip():
+        if node.text and node.text.strip():
             self.text.append(remove_extra_whitespace(node.text))
         for child in node:
             # TODO check ind in gust.xml
-            if child.tag in ['fnt', 'ind']:
+            if child.tag in ['adm', 'bld', 'fnt']:
+                if child.tail and child.tail.strip():
+                    self.text.append(remove_extra_whitespace(child.tail))
                 continue
             tag_class = globals()[child.tag.title()]
             self.text.append(tag_class(child, extra_info))
-            if child.tail.strip():
+            if child.tail and child.tail.strip():
                 self.text.append(remove_extra_whitespace(child.tail))
 
     def to_text(self):
         pass
+
+
+class TextNode(Node):
+    def __init__(self, node, extra_info=None):
+        super().__init__(node, extra_info)
+        self.parse_children(node, extra_info)
+
+    def to_text(self):
+        parts = []
+        for node in self.text:
+            if isinstance(node, str):
+                parts.append(node)
+            else:
+                parts.append(node.to_text())
+        # print(self.text)
+        # print(parts)
+        return ''.join(parts).strip()
 
 
 class Art(Node):
@@ -56,10 +75,13 @@ class Art(Node):
         rad = node.find('kap/rad')
         self.kap = (rad.text, rad.tail.strip())
 
+    def derivations(self):
+        for drv in self.drv:
+            yield drv
+        # TODO subart, snc
+
     def to_text(self):
-        drv = [d.to_text() for d in self.drv]
-        res = ''.join(drv)
-        return res
+        raise Exception('Do not use Art.to_text() directly')
 
 
 class Subart(Node):
@@ -89,7 +111,6 @@ class Drv(Node):
             if len(self.snc) > 1:
                 text = "%s. %s" % (n+1, text)
             meanings.append(text)
-        print(meanings)
         return '\n\n'.join(meanings)
 
 
@@ -154,27 +175,17 @@ class Uzo(Node):
 
 
 # TODO parse ekz tags
-class Dif(Node):
+class Dif(TextNode):
     tags = ['trd']
-
-    def __init__(self, node, extra_info=None):
-        super().__init__(node, extra_info)
-        self.parse_children(node, extra_info)
-
-    def to_text(self):
-        parts = []
-        for node in self.text:
-            if isinstance(node, str):
-                parts.append(node)
-            else:
-                parts.append(node.to_text())
-        return ''.join(parts).strip()
 
 
 class Trd(Node):
     def __init__(self, node, extra_info=None):
         self.text = node.text
         self.lng = node.get('lng')
+
+    def to_text(self):
+        return ''
 
 
 class Trdgrp(Node):
@@ -195,9 +206,12 @@ class Ref(Node):
         return self.text
 
 
-class Ekz(Node):
-    def __init__(self, node, extra_info=None):
-        self.parse_children(node)
+class Refgrp(TextNode):
+    tags = ['ref']
+
+
+class Ekz(TextNode):
+    pass
 
 
 class Tld(Node):
@@ -221,6 +235,14 @@ class Frm(Node):
 
     def to_text(self):
         return self.text
+
+
+class Ctl(TextNode):
+    pass
+
+
+class Ind(TextNode):
+    pass
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict():

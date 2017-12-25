@@ -1,6 +1,5 @@
-from process_revo import get_main_word, stringify_children, parse_snc
+from process_revo import get_main_word
 from utils import add_hats
-import xml.etree.ElementTree as ET
 
 
 def test_mrk():
@@ -18,61 +17,6 @@ def test_mrk_uppercase():
 
 def test_mrk_separation():
     assert get_main_word('alask.A0aGolfo') == 'Alaska Golfo'
-
-
-def test_stringify_xml():
-    assert stringify_children(ET.fromstring('<a>   Hola  </a>')) == 'Hola'
-    assert stringify_children(ET.fromstring('<a><b>Ho</b>la</a>')) == 'Hola'
-
-
-def test_stringify_xml_newlines():
-    assert stringify_children(ET.fromstring("<i>\n<b>Saluton\n</b> mon\ndo</i>")) == \
-        'Saluton mondo'
-
-
-def test_stringify_xml_whitespace():
-    assert stringify_children(ET.fromstring('<a>Bonan    tagon</a>')) == 'Bonan tagon'
-
-
-def test_snc():
-    xml = """<snc mrk="abak.0o.ARKI">
-    <uzo tip="fak">ARKI</uzo>
-    <dif>
-      Supera plata parto de kolona
-      <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
-    </dif>
-    </snc>"""
-    assert parse_snc(ET.fromstring(xml), None)[0] == 'ARKI Supera plata parto de kolona kapitelo.'
-
-
-def test_snc_replace_tld():
-    xml = """<snc mrk="abat.0o">
-    <dif>Monaĥejestro de <tld/>ejo.</dif>
-    </snc>"""
-    assert parse_snc(ET.fromstring(xml), None)[0] == 'Monaĥejestro de abatejo.'
-
-
-def test_snc_no_tail_after_tld():
-    assert parse_snc(ET.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), None)[0] == 'abat'
-
-
-def test_snc_ignore_fnt():
-    xml = '<snc mrk="-"><dif>Difino <ekz>Frazo<fnt><aut>Iu</aut></fnt>.</ekz></dif></snc>'
-    assert parse_snc(ET.fromstring(xml), None)[0] == 'Difino Frazo.'
-
-
-def test_snc_ignore_trd():
-    xml = '<snc mrk="-"><dif>Difino <ekz><ind>Frazo</ind>.<trd lng="hu">Trd</trd></ekz></dif></snc>'
-    assert parse_snc(ET.fromstring(xml), None)[0] == 'Difino Frazo.'
-
-
-def test_subsnc():
-    xml = '''<snc mrk="-">
-        <dif>Uzata kiel:</dif>
-        <subsnc><dif>A</dif></subsnc>
-        <subsnc><dif>B</dif></subsnc>
-    </snc>'''
-    assert parse_snc(ET.fromstring(xml), ET.fromstring('<drv mrk="-"/>'))[0] == "Uzata kiel:\n\na) A\n\nb) B"
 
 
 def test_add_hats():

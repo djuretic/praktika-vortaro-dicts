@@ -2,11 +2,7 @@ from parser.revo import Art, Snc
 from lxml import etree
 import pytest
 
-@pytest.fixture()
-def parser():
-    return etree.XMLParser(remove_blank_text=True)
-
-def test_snc(parser):
+def test_snc():
     xml = """<snc mrk="abak.0o.ARKI">
     <uzo tip="fak">ARKI</uzo>
     <dif>
@@ -14,14 +10,27 @@ def test_snc(parser):
       <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
     </dif>
     </snc>"""
-    assert Snc(etree.fromstring(xml, parser=parser)).to_text() == 'ARKI Supera plata parto de kolona kapitelo.'
+    assert Snc(etree.fromstring(xml)).to_text() == 'ARKI Supera plata parto de kolona kapitelo.'
 
 
-def test_snc_replace_tld(parser):
+def test_snc_no_tail_after_tld():
+    assert Snc(etree.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>')).to_text() == 'abat'
+
+
+def test_snc_ignore_fnt():
+    xml = '<snc mrk="-"><dif>Difino <ekz>Frazo<fnt><aut>Iu</aut></fnt>.</ekz></dif></snc>'
+    assert Snc(etree.fromstring(xml)).to_text() == 'Difino Frazo.'
+
+
+def test_snc_ignore_trd():
+    xml = '<snc mrk="-"><dif>Difino <ekz><ind>Frazo</ind>.<trd lng="hu">Trd</trd></ekz></dif></snc>'
+    assert Snc(etree.fromstring(xml)).to_text() == 'Difino Frazo.'
+
+def test_snc_replace_tld():
     xml = """<snc mrk="abat.0o">
     <dif>Monaĥejestro de <tld/>ejo.</dif>
     </snc>"""
-    assert Snc(etree.fromstring(xml, parser=parser)).to_text() == 'Monaĥejestro de abatejo.'
+    assert Snc(etree.fromstring(xml)).to_text() == 'Monaĥejestro de abatejo.'
 
 
 def test_subsnc():
@@ -42,4 +51,4 @@ def test_multiple_snc():
         </drv>
     </art>
     '''
-    assert Art(etree.fromstring(xml)).to_text() == "1. A\n\n2. B"
+    assert list(Art(etree.fromstring(xml)).derivations()) == ["1. A\n\n2. B"]

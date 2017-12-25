@@ -6,6 +6,7 @@ from lxml import etree
 import click
 
 from utils import add_hats
+import parser.revo
 
 
 def stringify_children(node, word=None, first=True, ignore=None):
@@ -129,87 +130,30 @@ def get_main_word(mrk):
 
 
 def parse_article(filename, num_article, cursor, verbose=False):
-    with open(filename) as f:
-        article = f.read()
+    art = None
+    try:
+        art = parser.revo.parse_article(filename)
+    except:
+        print('Error parsing %s' % filename)
+        raise
 
-    xml_parser = ET.XMLParser()
-    for entity, value in entities_dict().items():
-        xml_parser.entity[entity] = value
-    tree = ET.fromstring(article, parser=xml_parser)
-
-    art = tree.find('art')
-    main_word = art.find('kap/rad')
-    if verbose:
-        print(main_word)
-
-    row_id = None
     found_words = []
-    # TODO parse ref (ekz. a1)
-    for drv in art.findall('drv'):
-        # Example: afekcii has <dif> here
-        meanings = []
-        dif = drv.find('dif')
-        mrk = drv.get('mrk')
-        main_word_txt = get_main_word(mrk)
+    for drv in art.derivations():
+        main_word_txt = get_main_word(drv.mrk)
         found_words.append(main_word_txt)
-        if dif is not None:
-            meanings.append(stringify_children(dif))
-        # TODO initial
-        # word = drv.find('kap')
-        # print(word.find('tld').tail)
-
-        # TODO drv also has dif
-        # parse multiple uzo (example: a1.xml)
-        uzo_list = [t.text for t in drv.findall('uzo')]
-        uzo_txt = ''
-        if uzo_list:
-            uzo_txt = " ".join(uzo_list) + " "
-
-        for snc in drv.findall('snc'):
-            meanings.append(uzo_txt + parse_snc(snc, drv, verbose)[0])
-
-        if len(meanings) > 1:
-            meanings = ["%d. %s" % (n+1, meaning) for n, meaning in enumerate(meanings)]
-
         cursor.execute("""INSERT into words (
             article_id, word, mark, definition)
-            values (?, ?, ?, ?)""", (num_article, main_word_txt, mrk, '\n\n'.join(meanings)))
+            values (?, ?, ?, ?)""", (num_article, main_word_txt, drv.mrk, drv.to_text()))
         row_id = cursor.lastrowid
-        trads = extract_translations(drv, mrk)
-        insert_translations(row_id, trads, cursor)
+
+        if verbose:
+            print(main_word_txt, drv.mrk)
+        else:
+            print(main_word_txt)
+        # trads = extract_translations(drv, drv.mrk)
+        # insert_translations(row_id, trads, cursor)
 
     return {'id': row_id, 'words': found_words}
-
-
-def parse_snc(snc, drv, verbose=False):
-    mrk = snc.get('mrk') or drv.get('mrk')
-    radix = mrk.split('.')[0]
-    # TODO markup! Example word: abdiki, adekva.0a.KOMUNE
-    dif = snc.find('dif')
-    if dif is None:
-        dif = snc.find('./refgrp[@tip="dif"]')
-        if dif is None:
-            dif = snc.find('./ref[@tip="dif"]')
-            # TODO read ekz tags, example: afekci.0i.MED
-    dif_text = stringify_children(dif, radix, ignore=['trd'])
-
-    subsncs = snc.findall('subsnc')
-    subsncs = ["%s) %s" % (chr(ord('a')+n), parse_snc(subsnc, drv, verbose)[0])
-               for n, subsnc in enumerate(subsncs)]
-    if subsncs:
-        dif_text += '\n\n'
-        dif_text += '\n\n'.join(subsncs)
-
-    uzo = snc.find('uzo')
-    if uzo is not None:
-        dif_text = uzo.text + " " + dif_text
-    if verbose:
-        print(mrk, uzo, dif_text)
-    else:
-        print(mrk)
-
-    trads = extract_translations(snc, mrk)
-    return (dif_text, trads)
 
 
 @click.command()
