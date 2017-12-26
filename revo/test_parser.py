@@ -1,4 +1,4 @@
-from parser.revo import Art, Snc
+from parser.revo import Art, Snc, Dif
 from lxml import etree
 import pytest
 
@@ -51,4 +51,12 @@ def test_multiple_snc():
         </drv>
     </art>
     '''
-    assert list(Art(etree.fromstring(xml)).derivations()) == ["1. A\n\n2. B"]
+    drvs = [d.to_text() for d in Art(etree.fromstring(xml)).derivations()]
+    assert drvs == ["1. A\n\n2. B"]
+
+def test_dif_space_between_elements():
+    xml = '''<dif>
+            <ref tip="dif" cel="fin.0ajxo.GRA">Finaĵo</ref>
+            (lingvoscience: sufikso)
+        </dif>'''
+    assert Dif(etree.fromstring(xml)).to_text() == "Finaĵo (lingvoscience: sufikso)"

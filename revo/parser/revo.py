@@ -6,7 +6,6 @@ EXTRA_TAGS = ['uzo', 'dif', 'trd', 'trdgrp', 'refgrp', 'ref', 'rim']
 
 
 def remove_extra_whitespace(string):
-    string = string.replace("\n", "")
     cleaned = ' '.join(string.split())
     # Preserve trailing whitespace
     if string and string[-1] == ' ':
@@ -36,7 +35,6 @@ class Node:
         if node.text and node.text.strip():
             self.text.append(remove_extra_whitespace(node.text))
         for child in node:
-            # TODO check ind in gust.xml
             if child.tag in ['adm', 'bld', 'fnt']:
                 if child.tail and child.tail.strip():
                     self.text.append(remove_extra_whitespace(child.tail))
@@ -44,6 +42,8 @@ class Node:
             tag_class = globals()[child.tag.title()]
             self.text.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
+                if child.tag in ['ref'] and child.tail[0] in [" ", "\n"]:
+                    self.text.append(" ")
                 self.text.append(remove_extra_whitespace(child.tail))
 
     def to_text(self):
