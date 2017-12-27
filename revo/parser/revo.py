@@ -16,6 +16,8 @@ class Node:
     tags = []
     def __init__(self, node, extra_info=None):
         self.parse_tags(node, extra_info)
+        if extra_info:
+            self.parent = extra_info.get('parent')
 
     def __repr__(self):
         keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items())
@@ -24,6 +26,7 @@ class Node:
     def parse_tags(self, node, extra_info):
         for tag in self.tags:
             tag_class = globals()[tag.title()]
+            extra_info['parent'] = node
             nodes = [tag_class(subnode, extra_info) for subnode in node.findall(tag)]
             if nodes:
                 setattr(self, tag, nodes)
@@ -40,6 +43,7 @@ class Node:
                     self.text.append(remove_extra_whitespace(child.tail))
                 continue
             tag_class = globals()[child.tag.title()]
+            extra_info['parent'] = node
             self.text.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
                 if child.tag in ['ref'] and child.tail[0] in [" ", "\n"]:
@@ -73,6 +77,8 @@ class TextNode(Node):
 class Art(Node):
     tags = ['subart', 'drv', 'snc'] + EXTRA_TAGS
     def __init__(self, node, extra_info=None):
+        if extra_info is None:
+            extra_info = {}
         super().__init__(node, extra_info)
         assert node.tag == 'art'
         rad = node.find('kap/rad')
@@ -120,6 +126,10 @@ class Drv(Node):
         if self.rim:
             assert len(self.rim) == 1
             content += "\n\n%s" % self.rim[0].to_text()
+        if self.ref:
+            assert len(self.ref) == 1
+            content += "\n\n%s" % self.ref[0].to_text()
+
         return content
 
 class Subdrv(Node):
@@ -194,10 +204,14 @@ class Dif(TextNode):
 
 class Trd(Node):
     def __init__(self, node, extra_info=None):
+        super().__init__(node, extra_info)
         self.text = node.text
         self.lng = node.get('lng')
 
+    # abel.xml has a trd inside a dif
     def to_text(self):
+        if self.parent.tag == 'dif':
+            return self.text
         return ''
 
 
@@ -213,7 +227,9 @@ class Trdgrp(Node):
 
 
 class Ref(TextNode):
-    pass
+    def to_text(self):
+        # TODO hide arrow
+        return "→ %s" % super().to_text()
 
 
 class Refgrp(TextNode):
