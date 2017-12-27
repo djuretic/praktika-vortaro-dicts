@@ -118,9 +118,17 @@ class Drv(Node):
         self.kap = kap.tail
 
     def to_text(self):
-        # TODO subdrv, ref at the end (a1.xml)
+        # TODO subdrv
         meanings = []
         content = ''
+
+        for uzo in self.uzo:
+            content += uzo.to_text() + ' '
+        for ref in self.ref:
+            if ref.tip != 'dif':
+                continue
+            content += ref.to_text()
+
         for n, snc in enumerate(self.snc):
             text = snc.to_text()
             if len(self.snc) > 1:
@@ -231,6 +239,10 @@ class Trdgrp(Node):
 
 
 class Ref(TextNode):
+    def __init__(self,node, extra_info=None):
+        super().__init__(node, extra_info)
+        self.tip = node.get('tip')
+
     def to_text(self):
         # TODO hide arrow
         return "→ %s" % super().to_text()
