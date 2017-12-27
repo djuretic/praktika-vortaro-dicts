@@ -15,6 +15,8 @@ def remove_extra_whitespace(string):
 class Node:
     tags = []
     def __init__(self, node, extra_info=None):
+        if extra_info is None:
+            extra_info = {}
         self.parse_tags(node, extra_info)
         if extra_info:
             self.parent = extra_info.get('parent')
@@ -56,6 +58,8 @@ class Node:
 
 class TextNode(Node):
     def __init__(self, node, extra_info=None):
+        if extra_info is None:
+            extra_info = {}
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
 
@@ -83,6 +87,7 @@ class Art(Node):
         assert node.tag == 'art'
         rad = node.find('kap/rad')
         self.kap = (rad.text, rad.tail.strip())
+        extra_info['radix'] = self.kap[0]
 
     def derivations(self):
         for drv in self.drv:
@@ -147,7 +152,6 @@ class Snc(Node):
             extra_info = {}
         # example: snc without mrk but drv has it (see zoni in zon.xml)
         mrk = self.mrk or extra_info['radix']
-        extra_info['radix'] = mrk.split('.')[0]
         super().__init__(node, extra_info)
 
     def to_text(self):
@@ -248,7 +252,7 @@ class Tld(Node):
     def __init__(self, node, extra_info=None):
         self.radix = None
         if extra_info:
-            self.radix = extra_info['radix']
+            self.radix = extra_info.get('radix')
 
     def to_text(self):
         return self.radix or '-----'

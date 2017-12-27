@@ -116,16 +116,17 @@ def create_db():
     return conn
 
 
-def get_main_word(mrk):
+def get_main_word(rad, mrk):
+    rad = add_hats(rad)
     mrk = add_hats(mrk)
     parts = mrk.split('.')
     pos = parts[1].index('0')
 
     if pos and parts[1][pos-1].isupper():
-        parts[0] = parts[0].capitalize()
-        word = re.sub('.0', parts[0], parts[1])
+        rad = rad.capitalize()
+        word = re.sub('.0', rad, parts[1])
     else:
-        word = parts[1].replace('0', parts[0])
+        word = parts[1].replace('0', rad)
     return re.sub(r"(\w)([A-ZĈŜĜĤĴ])", r"\1 \2", word)
 
 
@@ -139,7 +140,7 @@ def parse_article(filename, num_article, cursor, verbose=False):
 
     found_words = []
     for drv in art.derivations():
-        main_word_txt = get_main_word(drv.mrk)
+        main_word_txt = get_main_word(art.kap[0], drv.mrk)
         found_words.append(main_word_txt)
         cursor.execute("""INSERT into words (
             article_id, word, mark, definition)

@@ -10,11 +10,11 @@ def test_snc():
       <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
     </dif>
     </snc>"""
-    assert Snc(etree.fromstring(xml)).to_text() == 'ARKI Supera plata parto de kolona kapitelo.'
+    assert Snc(etree.fromstring(xml)).to_text() == 'ARKI Supera plata parto de kolona → kapitelo.'
 
 
 def test_snc_no_tail_after_tld():
-    assert Snc(etree.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>')).to_text() == 'abat'
+    assert Snc(etree.fromstring('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), {"radix": "abat"}).to_text() == 'abat'
 
 
 def test_snc_ignore_fnt():
@@ -30,7 +30,7 @@ def test_snc_replace_tld():
     xml = """<snc mrk="abat.0o">
     <dif>Monaĥejestro de <tld/>ejo.</dif>
     </snc>"""
-    assert Snc(etree.fromstring(xml)).to_text() == 'Monaĥejestro de abatejo.'
+    assert Snc(etree.fromstring(xml), {"radix": "abat"}).to_text() == 'Monaĥejestro de abatejo.'
 
 
 def test_subsnc():
@@ -59,4 +59,4 @@ def test_dif_space_between_elements():
             <ref tip="dif" cel="fin.0ajxo.GRA">Finaĵo</ref>
             (lingvoscience: sufikso)
         </dif>'''
-    assert Dif(etree.fromstring(xml)).to_text() == "Finaĵo (lingvoscience: sufikso)"
+    assert Dif(etree.fromstring(xml)).to_text() == "→ Finaĵo (lingvoscience: sufikso)"
