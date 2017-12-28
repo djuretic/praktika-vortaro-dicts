@@ -1,6 +1,19 @@
-from parser.revo import Art, Snc, Dif
+from parser.revo import Art, Snc, Dif, Drv
 from lxml import etree
 import pytest
+
+def test_article_kap():
+    xml = """<art>
+        <kap>
+            <ofc>1</ofc>
+            -<rad>aĉ</rad>/ <fnt><bib>PV</bib></fnt>
+        </kap>
+    </art>"""
+    assert Art(etree.fromstring(xml)).kap == ('aĉ', '/')
+
+def test_drv_multiple_kap():
+    xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""
+    assert Drv(etree.fromstring(xml), {'radix': 'ajn'}).kap == 'sen ajna, sen ia ajn'
 
 def test_snc():
     xml = """<snc mrk="abak.0o.ARKI">

@@ -90,19 +90,41 @@ class Art(Node):
         extra_info['radix'] = self.kap[0]
 
     def derivations(self):
-        for drv in self.drv:
-            yield drv
-        # TODO subart, snc
+        if self.subart:
+            for subart in self.subart:
+                for drv in subart.derivations():
+                    yield drv
+        else:
+            for drv in self.drv:
+                yield drv
+        # TODO snc
 
     def to_text(self):
         raise Exception('Do not use Art.to_text() directly')
+
+
+class Kap(TextNode):
+    pass
+
+
+class Ofc(TextNode):
+    def to_text(self):
+        return ''
+
+
+class Var(TextNode):
+    pass
 
 
 class Subart(Node):
     tags = ['drv', 'snc'] + EXTRA_TAGS
 
     def __init__(self, node, extra_info=None):
-        self.parse_tags(node)
+        super().__init__(node, extra_info)
+
+    def derivations(self):
+        for drv in self.drv:
+            yield drv
 
 
 class Drv(Node):
@@ -114,8 +136,8 @@ class Drv(Node):
             extra_info = {}
         extra_info['radix'] = self.mrk.split('.')[0]
         super().__init__(node, extra_info)
-        kap = node.find('kap/tld')
-        self.kap = kap.tail
+        kap = Kap(node.find('kap'), extra_info)
+        self.kap = kap.to_text()
 
     def to_text(self):
         # TODO subdrv
@@ -289,7 +311,20 @@ class Frm(TextNode):
     pass
 
 
+# TODO sub format (seen en acetil.xml)
+class Sub(TextNode):
+    pass
+
+
+class Sup(TextNode):
+    pass
+
+
 class K(TextNode):
+    pass
+
+
+class G(TextNode):
     pass
 
 

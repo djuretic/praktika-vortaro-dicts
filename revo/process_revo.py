@@ -1,66 +1,11 @@
 import re
 import sqlite3
 import glob
-import xml.etree.ElementTree as ET
 from lxml import etree
 import click
 
 from utils import add_hats
 import parser.revo
-
-
-def stringify_children(node, word=None, first=True, ignore=None):
-    # print(node, "Word: ", word)
-    if node is None:
-        return ''
-    s = node.text
-    if s is None:
-        s = ''
-    if node.tag in ['adm', 'bld', 'fnt'] or (ignore and node.tag in ignore):
-        # Ignore them
-        s = ''
-        if node.tail:
-            s = node.tail
-        return s
-    elif node.tag == 'tld':
-        # Replace with head word
-        res = word or ''
-        if node.tail:
-            res += node.tail
-        return res
-
-    has_child = False
-    for child in node:
-        has_child = True
-        s += stringify_children(child, word, first=False, ignore=ignore)
-
-    if not has_child and node.tail:
-        s += node.tail
-
-    # print(node, "Word: ", word, "Res:", s)
-    if first:
-        return ' '.join(s.strip().replace("\n", "").split())
-    return s
-
-
-def extract_translations(node, mrk):
-    trads = {}
-
-    def read_translation(mrk, lng, trd):
-        trd_txt = stringify_children(trd)
-        # print(' ', mrk, lng, trd_txt)
-        if lng not in trads:
-            trads[lng] = []
-        trads[lng].append(trd_txt)
-
-    for trd in node.findall('trd'):
-        read_translation(mrk, trd.get('lng'), trd)
-    for trdgrp in node.findall('trdgrp'):
-        for trd in trdgrp.findall('trd'):
-            read_translation(mrk, trdgrp.get('lng'), trd)
-
-    # print(trads)
-    return trads
 
 
 def insert_translations(word_id, trads, cursor):
@@ -115,7 +60,7 @@ def create_db():
     c.close()
     return conn
 
-
+# TODO maybe read it from drv/kap (ex: -aĉ)
 def get_main_word(rad, mrk):
     rad = add_hats(rad)
     mrk = add_hats(mrk)
