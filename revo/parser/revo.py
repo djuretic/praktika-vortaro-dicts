@@ -159,8 +159,8 @@ class Drv(Node):
         content += '\n\n'.join(meanings)
 
         if self.rim:
-            assert len(self.rim) == 1
-            content += "\n\n%s" % self.rim[0].to_text()
+            rim_txt = [rim.to_text() for rim in self.rim]
+            content += "\n\n%s" % '\n\n'.join(rim_txt)
         if self.ref:
             assert len(self.ref) == 1
             content += "\n\n%s" % self.ref[0].to_text()
@@ -297,8 +297,14 @@ class Klr(TextNode):
 
 
 class Rim(TextNode):
+    def __init__(self, node, extra_info=None):
+        super().__init__(node, extra_info)
+        self.num = node.get('num') or ''
+
     def to_text(self):
         string = super().to_text()
+        if self.num:
+            return "Rim. %s: %s" % (self.num, string)
         return "Rim. %s" % string
 
 
