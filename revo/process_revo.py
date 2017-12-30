@@ -64,6 +64,8 @@ def create_db():
 def get_main_word(rad, mrk):
     rad = add_hats(rad)
     mrk = add_hats(mrk)
+    if not mrk:
+        return rad
     parts = mrk.split('.')
     pos = parts[1].index('0')
 
@@ -75,7 +77,7 @@ def get_main_word(rad, mrk):
     return re.sub(r"(\w)([A-ZĈŜĜĤĴ])", r"\1 \2", word)
 
 
-def parse_article(filename, num_article, cursor, verbose=False):
+def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
     art = None
     try:
         art = parser.revo.parse_article(filename)
@@ -87,10 +89,12 @@ def parse_article(filename, num_article, cursor, verbose=False):
     for drv in art.derivations():
         main_word_txt = get_main_word(art.kap[0], drv.mrk)
         found_words.append(main_word_txt)
-        cursor.execute("""INSERT into words (
-            article_id, word, mark, definition)
-            values (?, ?, ?, ?)""", (num_article, main_word_txt, drv.mrk, drv.to_text()))
-        row_id = cursor.lastrowid
+        row_id = None
+        if not dry_run:
+            cursor.execute("""INSERT into words (
+                article_id, word, mark, definition)
+                values (?, ?, ?, ?)""", (num_article, main_word_txt, drv.mrk, drv.to_text()))
+            row_id = cursor.lastrowid
 
         if verbose:
             print(filename, drv.mrk, row_id)
@@ -106,7 +110,8 @@ def parse_article(filename, num_article, cursor, verbose=False):
 @click.option('--word')
 @click.option('--limit', type=int)
 @click.option('--verbose', is_flag=True)
-def main(word, limit, verbose):
+@click.option('--dry-run', is_flag=True)
+def main(word, limit, verbose, dry_run):
     conn = create_db()
     cursor = conn.cursor()
 
@@ -117,7 +122,7 @@ def main(word, limit, verbose):
         for filename in files:
             if word and word not in filename:
                 continue
-            parse_article(filename, num_article, cursor, verbose)
+            parse_article(filename, num_article, cursor, verbose, dry_run)
             num_article += 1
 
             if limit and num_article >= limit:

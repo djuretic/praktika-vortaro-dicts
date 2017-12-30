@@ -2,7 +2,7 @@ import click
 import xml.etree.ElementTree as ET
 from lxml import etree
 
-EXTRA_TAGS = ['uzo', 'dif', 'trd', 'trdgrp', 'refgrp', 'ref', 'rim']
+EXTRA_TAGS = ['uzo', 'dif', 'trd', 'trdgrp', 'refgrp', 'ref', 'rim', 'ekz']
 
 
 def remove_extra_whitespace(string):
@@ -15,6 +15,7 @@ def remove_extra_whitespace(string):
 class Node:
     tags = []
     def __init__(self, node, extra_info=None):
+        self.name = node.tag
         if extra_info is None:
             extra_info = {}
         self.parse_tags(node, extra_info)
@@ -52,6 +53,13 @@ class Node:
                     self.text.append(" ")
                 self.text.append(remove_extra_whitespace(child.tail))
 
+    def filter_children(self, predicate):
+        for tag in self.text:
+            if isinstance(tag, str):
+                yield str
+            elif predicate(tag):
+                yield tag
+
     def to_text(self):
         pass
 
@@ -83,7 +91,6 @@ class Art(Node):
     def __init__(self, node, extra_info=None):
         if extra_info is None:
             extra_info = {}
-        super().__init__(node, extra_info)
         assert node.tag == 'art'
         rad = node.find('kap/rad')
         tail = ''
@@ -91,6 +98,7 @@ class Art(Node):
             tail = rad.tail.strip()
         self.kap = (rad.text, tail)
         extra_info['radix'] = self.kap[0]
+        super().__init__(node, extra_info)
 
     def derivations(self):
         if self.subart:
@@ -100,7 +108,7 @@ class Art(Node):
         else:
             for drv in self.drv:
                 yield drv
-        # TODO snc
+        assert not self.snc
 
     def to_text(self):
         raise Exception('Do not use Art.to_text() directly')
@@ -119,15 +127,20 @@ class Var(TextNode):
     pass
 
 
-class Subart(Node):
+class Subart(TextNode):
     tags = ['drv', 'snc'] + EXTRA_TAGS
 
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
+        self.mrk = ''
 
     def derivations(self):
         for drv in self.drv:
             yield drv
+        # al.xml, last <subart>
+        # TODO multiple snc, add numbering and line breaks
+        if self.snc:
+            yield self
 
 
 class Drv(Node):
@@ -139,6 +152,7 @@ class Drv(Node):
             extra_info = {}
         extra_info['radix'] = self.mrk.split('.')[0]
         super().__init__(node, extra_info)
+        self.parse_children(node, extra_info)
         kap = Kap(node.find('kap'), extra_info)
         self.kap = kap.to_text()
 
@@ -153,12 +167,21 @@ class Drv(Node):
             if ref.tip != 'dif':
                 continue
             content += ref.to_text()
+        for dif in self.dif:
+            content += dif.to_text() + ' '
 
         for n, snc in enumerate(self.snc):
             text = snc.to_text()
             if len(self.snc) > 1:
                 text = "%s. %s" % (n+1, text)
             meanings.append(text)
+
+        for n, subdrv in enumerate(self.subdrv):
+            text = subdrv.to_text()
+            # if len(self.snc) > 1:
+            #     text = "%s. %s" % (n+1, text)
+            meanings.append(text)
+
         content += '\n\n'.join(meanings)
 
         if self.rim:
@@ -173,10 +196,21 @@ class Drv(Node):
         return content
 
 class Subdrv(Node):
-    tags = ['snc']
+    tags = ['snc'] + EXTRA_TAGS
 
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
+        self.parse_children(node, extra_info)
+
+    def to_text(self):
+        # TODO cycle letter
+        letter = ord('A')
+        content = "\n\n%s. " % chr(letter)
+
+        childs = self.filter_children(lambda x: x.name in ['dif', 'gra', 'uzo', 'fnt', 'ref'] and (x.name != 'ref' or x.tip == 'dif'))
+        for child in childs:
+            content += child.to_text()
+        return content
 
 class Snc(Node):
     tags = ['subsnc']  + EXTRA_TAGS
@@ -194,6 +228,7 @@ class Snc(Node):
         if self.uzo:
             content += ' '.join([u.to_text() for u in self.uzo]) + ' '
         content += '\n'.join([d.to_text() for d in self.dif])
+        content += '\n'.join([d.to_text() for d in self.ekz])
 
         if self.subsnc:
             content += '\n\n'
