@@ -18,7 +18,9 @@ class Node:
         self.name = node.tag
         if extra_info is None:
             extra_info = {}
+        # TODO remove this call
         self.parse_tags(node, extra_info)
+        self.parse_children(node, extra_info)
         if extra_info:
             self.parent = extra_info.get('parent')
 
@@ -37,24 +39,24 @@ class Node:
                 setattr(self, tag, [])
 
     def parse_children(self, node, extra_info=None):
-        self.text = []
+        self.children = []
         if node.text and node.text.strip():
-            self.text.append(remove_extra_whitespace(node.text))
+            self.children.append(remove_extra_whitespace(node.text))
         for child in node:
             if child.tag in ['adm', 'bld', 'fnt']:
                 if child.tail and child.tail.strip():
-                    self.text.append(remove_extra_whitespace(child.tail))
+                    self.children.append(remove_extra_whitespace(child.tail))
                 continue
             tag_class = globals()[child.tag.title()]
             extra_info['parent'] = node
-            self.text.append(tag_class(child, extra_info))
+            self.children.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
                 if child.tag in ['ref'] and child.tail[0] in [" ", "\n"]:
-                    self.text.append(" ")
-                self.text.append(remove_extra_whitespace(child.tail))
+                    self.children.append(" ")
+                self.children.append(remove_extra_whitespace(child.tail))
 
     def filter_children(self, predicate):
-        for tag in self.text:
+        for tag in self.children:
             if isinstance(tag, str):
                 yield str
             elif predicate(tag):
@@ -73,7 +75,7 @@ class TextNode(Node):
 
     def to_text(self):
         parts = []
-        for node in self.text:
+        for node in self.children:
             if isinstance(node, str):
                 parts.append(node)
             else:
@@ -81,7 +83,7 @@ class TextNode(Node):
         try:
             return ''.join(parts).strip()
         except:
-            print(self.text)
+            print(self.children)
             print(parts)
             raise
 
@@ -115,6 +117,10 @@ class Art(Node):
 
 
 class Kap(TextNode):
+    pass
+
+
+class Rad(TextNode):
     pass
 
 
