@@ -86,7 +86,10 @@ class Art(Node):
         super().__init__(node, extra_info)
         assert node.tag == 'art'
         rad = node.find('kap/rad')
-        self.kap = (rad.text, rad.tail.strip())
+        tail = ''
+        if rad.tail:
+            tail = rad.tail.strip()
+        self.kap = (rad.text, tail)
         extra_info['radix'] = self.kap[0]
 
     def derivations(self):
@@ -159,11 +162,13 @@ class Drv(Node):
         content += '\n\n'.join(meanings)
 
         if self.rim:
+            # multiple seen on akuzat.xml
             rim_txt = [rim.to_text() for rim in self.rim]
             content += "\n\n%s" % '\n\n'.join(rim_txt)
         if self.ref:
-            assert len(self.ref) == 1
-            content += "\n\n%s" % self.ref[0].to_text()
+            # multiple seen on amik.xml
+            ref_txt = [ref.to_text() for ref in self.ref]
+            content += "\n\n%s" % (' '.join(ref_txt))
 
         return content
 
@@ -236,16 +241,15 @@ class Dif(TextNode):
     tags = ['trd']
 
 
-class Trd(Node):
+class Trd(TextNode):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
-        self.text = node.text
         self.lng = node.get('lng')
 
     # abel.xml has a trd inside a dif
     def to_text(self):
         if self.parent.tag == 'dif':
-            return self.text
+            return super().to_text()
         return ''
 
 
@@ -345,6 +349,11 @@ class Ctl(TextNode):
 
 class Ind(TextNode):
     pass
+
+
+class Mll(TextNode):
+    pass
+
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict():
