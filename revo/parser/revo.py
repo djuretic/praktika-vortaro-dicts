@@ -51,7 +51,7 @@ class Node:
             extra_info['parent'] = node
             self.children.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
-                if child.tag in ['ref'] and child.tail[0] in [" ", "\n"]:
+                if child.tag in ['ref', 'tld'] and child.tail[0] in [" ", "\n"]:
                     self.children.append(" ")
                 self.children.append(remove_extra_whitespace(child.tail))
 
@@ -124,6 +124,18 @@ class Rad(TextNode):
     pass
 
 
+class Gra(TextNode):
+    pass
+
+
+class Mlg(TextNode):
+    pass
+
+
+class Vspec(TextNode):
+    def to_text(self):
+        return "(%s)" % super().to_text()
+
 class Ofc(TextNode):
     def to_text(self):
         return ''
@@ -156,11 +168,10 @@ class Drv(Node):
         self.mrk = node.get('mrk')
         if not extra_info:
             extra_info = {}
-        extra_info['radix'] = self.mrk.split('.')[0]
-        super().__init__(node, extra_info)
-        self.parse_children(node, extra_info)
         kap = Kap(node.find('kap'), extra_info)
         self.kap = kap.to_text()
+        super().__init__(node, extra_info)
+        self.parse_children(node, extra_info)
 
     def to_text(self):
         # TODO subdrv

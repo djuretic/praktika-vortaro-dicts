@@ -60,23 +60,6 @@ def create_db():
     c.close()
     return conn
 
-# TODO maybe read it from drv/kap (ex: -aĉ)
-def get_main_word(rad, mrk):
-    rad = add_hats(rad)
-    mrk = add_hats(mrk)
-    if not mrk:
-        return rad
-    parts = mrk.split('.')
-    pos = parts[1].index('0')
-
-    if pos and parts[1][pos-1].isupper():
-        rad = rad.capitalize()
-        word = re.sub('.0', rad, parts[1])
-    else:
-        word = parts[1].replace('0', rad)
-    return re.sub(r"(\w)([A-ZĈŜĜĤĴ])", r"\1 \2", word)
-
-
 def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
     art = None
     try:
@@ -87,7 +70,7 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
 
     found_words = []
     for drv in art.derivations():
-        main_word_txt = get_main_word(art.kap[0], drv.mrk)
+        main_word_txt = add_hats(getattr(drv, 'kap', art.kap[0]))
         found_words.append(main_word_txt)
         row_id = None
         if not dry_run:

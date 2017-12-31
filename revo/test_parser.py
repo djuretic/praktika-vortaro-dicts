@@ -33,6 +33,10 @@ def test_drv_multiple_kap(parser):
     xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""
     assert Drv(parser(xml), {'radix': 'ajn'}).kap == 'sen ajna, sen ia ajn'
 
+def test_drv_kap(parser):
+    xml = '<drv mrk="a1.0.volvita"><kap><tld/> volvita</kap></drv>'
+    assert Drv(parser(xml), {'radix': 'a'}).kap == 'a volvita'
+
 def test_subdrv(parser):
     xml = """<drv mrk="ad.0">
         <kap><ofc>*</ofc>-<tld/></kap>
