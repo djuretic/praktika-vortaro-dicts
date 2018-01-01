@@ -177,6 +177,7 @@ class Drv(Node):
         for node in self.get_except(Subdrv, Snc, Gra, Uzo, Fnt, Kap, Dif, Mlg):
             if isinstance(node, Ref) and node.tip == 'dif':
                 continue
+            content += node.to_text()
 
         # if self.rim:
         #     # multiple seen on akuzat.xml
