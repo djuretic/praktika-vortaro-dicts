@@ -15,7 +15,6 @@ class Node:
         if extra_info is None:
             extra_info = {}
         self.parse_children(node, extra_info)
-        # self.parse_tags(node, extra_info)
         if extra_info:
             self.parent = extra_info.get('parent')
 
@@ -159,8 +158,12 @@ class Drv(Node):
                 continue
             content += node.to_text()
 
+        n_sncs = len(list(self.get(Snc)))
         for n, snc in enumerate(self.get(Snc)):
-            text = "%s. %s" % (n+1, snc.to_text())
+            if n_sncs > 1:
+                text = "%s. %s" % (n+1, snc.to_text())
+            else:
+                text = snc.to_text()
             meanings.append(text)
 
         for n, subdrv in enumerate(self.get(Subdrv)):
@@ -230,7 +233,7 @@ class Snc(Node):
             content += '\n\n'.join(subs)
 
         for node in self.get_except(Gra, Uzo, Fnt, Dif, Subsnc):
-            if isinstance(node, Ref) and ref.tip == 'dif':
+            if isinstance(node, Ref) and node.tip == 'dif':
                 continue
             content += node.to_text()
 
@@ -248,6 +251,21 @@ class Uzo(TextNode):
 
 
 class Dif(TextNode):
+    pass
+
+
+class Tezrad(Node):
+    def to_text(self):
+        return ''
+
+
+# TODO link to url
+class Url(TextNode):
+    pass
+
+
+# TODO link
+class Lstref(TextNode):
     pass
 
 
@@ -279,7 +297,12 @@ class Ref(TextNode):
 
     def to_text(self):
         # TODO hide arrow
-        return "→ %s" % super().to_text()
+        symbol = "→"
+        if self.tip == 'malprt':
+            symbol = "↗"
+        elif self.tip == "prt":
+            symbol = "↘"
+        return "%s %s" % (symbol, super().to_text())
 
 
 class Refgrp(TextNode):
