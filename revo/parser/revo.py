@@ -2,8 +2,6 @@ import click
 import xml.etree.ElementTree as ET
 from lxml import etree
 
-EXTRA_TAGS = ['uzo', 'dif', 'trd', 'trdgrp', 'refgrp', 'ref', 'rim', 'ekz']
-
 
 def remove_extra_whitespace(string):
     cleaned = ' '.join(string.split())
@@ -13,30 +11,17 @@ def remove_extra_whitespace(string):
     return cleaned
 
 class Node:
-    tags = []
     def __init__(self, node, extra_info=None):
-        self.name = node.tag
         if extra_info is None:
             extra_info = {}
-        # TODO remove this call
-        self.parse_tags(node, extra_info)
         self.parse_children(node, extra_info)
+        # self.parse_tags(node, extra_info)
         if extra_info:
             self.parent = extra_info.get('parent')
 
     def __repr__(self):
         keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items())
         return "<%s %s>" % (self.__class__.__name__, keys)
-
-    def parse_tags(self, node, extra_info):
-        for tag in self.tags:
-            tag_class = globals()[tag.title()]
-            extra_info['parent'] = node
-            nodes = [tag_class(subnode, extra_info) for subnode in node.findall(tag)]
-            if nodes:
-                setattr(self, tag, nodes)
-            else:
-                setattr(self, tag, [])
 
     def parse_children(self, node, extra_info=None):
         self.children = []
@@ -55,11 +40,15 @@ class Node:
                     self.children.append(" ")
                 self.children.append(remove_extra_whitespace(child.tail))
 
-    def filter_children(self, predicate):
+    def get(self, *args):
+        "Get nodes based on their class"
         for tag in self.children:
-            if isinstance(tag, str):
-                yield str
-            elif predicate(tag):
+            if tag.__class__ in args:
+                yield tag
+
+    def get_except(self, *args):
+        for tag in self.children:
+            if tag.__class__ not in args:
                 yield tag
 
     def to_text(self):
@@ -67,12 +56,6 @@ class Node:
 
 
 class TextNode(Node):
-    def __init__(self, node, extra_info=None):
-        if extra_info is None:
-            extra_info = {}
-        super().__init__(node, extra_info)
-        self.parse_children(node, extra_info)
-
     def to_text(self):
         parts = []
         for node in self.children:
@@ -89,7 +72,6 @@ class TextNode(Node):
 
 
 class Art(Node):
-    tags = ['subart', 'drv', 'snc'] + EXTRA_TAGS
     def __init__(self, node, extra_info=None):
         if extra_info is None:
             extra_info = {}
@@ -103,14 +85,12 @@ class Art(Node):
         super().__init__(node, extra_info)
 
     def derivations(self):
-        if self.subart:
-            for subart in self.subart:
-                for drv in subart.derivations():
+        for subart in self.get(Subart):
+            for drv in subart.derivations():
                     yield drv
-        else:
-            for drv in self.drv:
-                yield drv
-        assert not self.snc
+        for drv in self.get(Drv):
+            yield drv
+        assert not list(self.get(Snc))
 
     def to_text(self):
         raise Exception('Do not use Art.to_text() directly')
@@ -146,24 +126,20 @@ class Var(TextNode):
 
 
 class Subart(TextNode):
-    tags = ['drv', 'snc'] + EXTRA_TAGS
-
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.mrk = ''
 
     def derivations(self):
-        for drv in self.drv:
+        for drv in self.get(Drv):
             yield drv
         # al.xml, last <subart>
         # TODO multiple snc, add numbering and line breaks
-        if self.snc:
+        if self.get(Snc):
             yield self
 
 
 class Drv(Node):
-    tags = ['subdrv', 'snc'] + EXTRA_TAGS
-
     def __init__(self, node, extra_info=None):
         self.mrk = node.get('mrk')
         if not extra_info:
@@ -174,26 +150,20 @@ class Drv(Node):
         self.parse_children(node, extra_info)
 
     def to_text(self):
-        # TODO subdrv
         meanings = []
         content = ''
 
-        for uzo in self.uzo:
-            content += uzo.to_text() + ' '
-        for ref in self.ref:
-            if ref.tip != 'dif':
+        # Kap and Fnt ignored
+        for node in self.get(Gra, Uzo, Dif, Ref):
+            if isinstance(node, Ref) and node.tip != 'dif':
                 continue
-            content += ref.to_text()
-        for dif in self.dif:
-            content += dif.to_text() + ' '
+            content += node.to_text()
 
-        for n, snc in enumerate(self.snc):
-            text = snc.to_text()
-            if len(self.snc) > 1:
-                text = "%s. %s" % (n+1, text)
+        for n, snc in enumerate(self.get(Snc)):
+            text = "%s. %s" % (n+1, snc.to_text())
             meanings.append(text)
 
-        for n, subdrv in enumerate(self.subdrv):
+        for n, subdrv in enumerate(self.get(Subdrv)):
             text = subdrv.to_text()
             # if len(self.snc) > 1:
             #     text = "%s. %s" % (n+1, text)
@@ -201,20 +171,22 @@ class Drv(Node):
 
         content += '\n\n'.join(meanings)
 
-        if self.rim:
-            # multiple seen on akuzat.xml
-            rim_txt = [rim.to_text() for rim in self.rim]
-            content += "\n\n%s" % '\n\n'.join(rim_txt)
-        if self.ref:
-            # multiple seen on amik.xml
-            ref_txt = [ref.to_text() for ref in self.ref]
-            content += "\n\n%s" % (' '.join(ref_txt))
+        for node in self.get_except(Subdrv, Snc, Gra, Uzo, Fnt, Kap, Dif, Mlg):
+            if isinstance(node, Ref) and node.tip == 'dif':
+                continue
+
+        # if self.rim:
+        #     # multiple seen on akuzat.xml
+        #     rim_txt = [rim.to_text() for rim in self.rim]
+        #     content += "\n\n%s" % '\n\n'.join(rim_txt)
+        # if self.ref:
+        #     # multiple seen on amik.xml
+        #     ref_txt = [ref.to_text() for ref in self.ref]
+        #     content += "\n\n%s" % (' '.join(ref_txt))
 
         return content
 
 class Subdrv(Node):
-    tags = ['snc'] + EXTRA_TAGS
-
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
@@ -224,14 +196,14 @@ class Subdrv(Node):
         letter = ord('A')
         content = "\n\n%s. " % chr(letter)
 
-        childs = self.filter_children(lambda x: x.name in ['dif', 'gra', 'uzo', 'fnt', 'ref'] and (x.name != 'ref' or x.tip == 'dif'))
-        for child in childs:
-            content += child.to_text()
+        # Fnt omitted
+        for node in self.get(Dif, Gra, Uzo, Ref):
+            if isinstance(node, Ref) and ref.tip != 'dif':
+                continue
+            content += node.to_text()
         return content
 
 class Snc(Node):
-    tags = ['subsnc']  + EXTRA_TAGS
-
     def __init__(self, node, extra_info=None):
         self.mrk = node.get('mrk')
         if not extra_info:
@@ -242,55 +214,41 @@ class Snc(Node):
 
     def to_text(self):
         content = ''
-        if self.uzo:
-            content += ' '.join([u.to_text() for u in self.uzo]) + ' '
-        content += '\n'.join([d.to_text() for d in self.dif])
-        content += '\n'.join([d.to_text() for d in self.ekz])
 
-        if self.subsnc:
+        # Fnt ignored
+        for node in self.get(Gra, Uzo, Dif, Ref):
+            if isinstance(node, Ref) and node.tip != 'dif':
+                continue
+            content += node.to_text()
+
+        if list(self.get(Subsnc)):
             content += '\n\n'
             subs = []
-            for n, subsnc in enumerate(self.subsnc):
+            for n, subsnc in enumerate(self.get(Subsnc)):
                 text = subsnc.to_text()
                 subs.append("%s) %s" % (chr(ord('a')+n), text))
             content += '\n\n'.join(subs)
 
-        if self.refgrp:
-            content += ''.join([r.to_text() for r in self.refgrp])
-        if self.ref:
-            content += ''.join([r.to_text() for r in self.ref])
+        for node in self.get_except(Gra, Uzo, Fnt, Dif, Subsnc):
+            if isinstance(node, Ref) and ref.tip == 'dif':
+                continue
+            content += node.to_text()
 
         return content
 
-class Subsnc(Node):
-    tags = EXTRA_TAGS
-
+class Subsnc(TextNode):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.mrk = node.get('mrk')
 
+
+class Uzo(TextNode):
     def to_text(self):
-        # TODO refactor (copied from Snc)
-        content = ''
-        if self.uzo:
-            content += ' '.join([u.to_text() for u in self.uzo]) + ' '
-        content += '\n'.join([d.to_text() for d in self.dif])
-        return content
+        return super().to_text() + ' '
 
 
-class Uzo(Node):
-    def __init__(self, node, extra_info=None):
-        super().__init__(node, extra_info)
-        # TODO tld tag
-        self.text = node.text
-
-    def to_text(self):
-        return self.text
-
-
-# TODO parse ekz tags
 class Dif(TextNode):
-    tags = ['trd']
+    pass
 
 
 class Trd(TextNode):
@@ -306,8 +264,6 @@ class Trd(TextNode):
 
 
 class Trdgrp(Node):
-    tags = ['trd']
-
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.lng = node.get('lng')
@@ -327,7 +283,7 @@ class Ref(TextNode):
 
 
 class Refgrp(TextNode):
-    tags = ['ref']
+    pass
 
 
 class Sncref(TextNode):
@@ -367,6 +323,11 @@ class Rim(TextNode):
 class Aut(TextNode):
     def to_text(self):
         return "[%s]" % super().to_text()
+
+
+class Fnt(Node):
+    def to_text(self):
+        return ''
 
 # found in zon.xml
 class Frm(TextNode):

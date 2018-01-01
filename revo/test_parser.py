@@ -1,4 +1,4 @@
-from parser.revo import Art, Snc, Dif, Drv
+from parser.revo import Art, Snc, Dif, Drv, Subart
 from lxml import etree
 import pytest
 
@@ -27,6 +27,7 @@ def test_article_no_drv(parser):
     </art>"""
     derivs = list(Art(parser(xml)).derivations())
     assert len(derivs) == 1
+    assert derivs[0].__class__ is Subart
     assert derivs[0].to_text() == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
 
 def test_drv_multiple_kap(parser):
@@ -47,7 +48,7 @@ def test_subdrv(parser):
             </dif>
         </subdrv>
     </drv>"""
-    assert Drv(parser(xml), {'radix': 'ad'}).to_text() == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi: \n\nA. substantivojn:"
+    assert Drv(parser(xml), {'radix': 'ad'}).to_text() == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn:"
 
 def test_snc(parser):
     xml = """<snc mrk="abak.0o.ARKI">
