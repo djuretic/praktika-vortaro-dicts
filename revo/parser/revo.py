@@ -120,7 +120,7 @@ class Mlg(TextNode):
 
 class Vspec(TextNode):
     def to_text(self):
-        return "(%s)" % super().to_text()
+        return StringWithFormat("(").add(super().to_text()).add(")")
 
 class Ofc(TextNode):
     def to_text(self):
@@ -351,13 +351,15 @@ class Rim(TextNode):
     def to_text(self):
         string = super().to_text()
         if self.num:
-            return "Rim. %s: %s" % (self.num, string)
-        return "Rim. %s" % string
+            content = StringWithFormat().add_bold("Rim. %s: " % self.num)
+            content += string
+            return content
+        return StringWithFormat().add_bold("Rim. ").add(string)
 
 
 class Aut(TextNode):
     def to_text(self):
-        return "[%s]" % super().to_text()
+        return StringWithFormat("[").add(super().to_text()).add("]")
 
 
 class Fnt(Node):

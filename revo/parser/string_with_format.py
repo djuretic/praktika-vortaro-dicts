@@ -3,6 +3,7 @@ from enum import Enum
 
 class Format(Enum):
     ITALIC = 'italic'
+    BOLD = 'bold'
 
 
 class StringWithFormat:
@@ -41,8 +42,10 @@ class StringWithFormat:
         return self
 
     def add_italic(self, other):
-        self.add(other, Format.ITALIC)
-        return self
+        return self.add(other, Format.ITALIC)
+
+    def add_bold(self, other):
+        return self.add(other, Format.BOLD)
 
     def apply_format(self, format_type):
         if not format_type:
