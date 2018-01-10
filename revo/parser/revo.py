@@ -1,7 +1,7 @@
 import click
 import xml.etree.ElementTree as ET
 from lxml import etree
-from .string_with_format import StringWithFormat
+from .string_with_format import StringWithFormat, Format
 
 
 def remove_extra_whitespace(string):
@@ -56,6 +56,9 @@ class Node:
 
 
 class TextNode(Node):
+    # Format enum
+    base_format = None
+
     def to_text(self):
         parts = []
         for node in self.children:
@@ -67,7 +70,7 @@ class TextNode(Node):
             content = StringWithFormat()
             for part in parts:
                 content += part
-            return content.strip()
+            return content.strip().apply_format(self.base_format)
         except:
             print(self.children)
             print(parts)
@@ -323,7 +326,7 @@ class Sncref(TextNode):
 
 
 class Ekz(TextNode):
-    pass
+    base_format = Format.ITALIC
 
 
 class Tld(Node):

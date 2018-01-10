@@ -28,7 +28,9 @@ def test_article_no_drv(parser):
     derivs = list(Art(parser(xml)).derivations())
     assert len(derivs) == 1
     assert derivs[0].__class__ is Subart
-    assert derivs[0].to_text().string == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
+    parsed = derivs[0].to_text()
+    assert parsed.string == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
+    assert parsed.format == {'italic': [(26, 57)]}
 
 def test_drv_multiple_kap(parser):
     xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""

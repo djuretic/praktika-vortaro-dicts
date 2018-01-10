@@ -1,3 +1,10 @@
+from enum import Enum
+
+
+class Format(Enum):
+    ITALIC = 'italic'
+
+
 class StringWithFormat:
     def __init__(self, string=None):
         self.string = string or ''
@@ -16,8 +23,8 @@ class StringWithFormat:
 
     def add(self, other, format_type=None, keep_whitespace=False):
         # print('ADD', repr(self), repr(self.format), repr(other), format_type)
-        if format_type and format_type not in self.format:
-            self.format[format_type] = []
+        if format_type and format_type.value not in self.format:
+            self.format[format_type.value] = []
 
         if isinstance(other, StringWithFormat):
             assert format_type is None
@@ -29,12 +36,20 @@ class StringWithFormat:
                 self.format[fmt] += [tuple(map(lambda x: x+n, indexes)) for indexes in fmt_list]
         else:
             if format_type:
-                self.format[format_type].append((len(self.string), len(self.string) + len(other)))
+                self.format[format_type.value].append((len(self.string), len(self.string) + len(other)))
             self.string += other
         return self
 
     def add_italic(self, other):
-        self.add(other, 'italic')
+        self.add(other, Format.ITALIC)
+        return self
+
+    def apply_format(self, format_type):
+        if not format_type:
+            return self
+        if format_type and format_type.value not in self.format:
+            self.format[format_type.value] = []
+        self.format[format_type.value].append((0, len(self.string)))
         return self
 
     def __add__(self, other):
