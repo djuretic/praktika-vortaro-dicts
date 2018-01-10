@@ -1,6 +1,7 @@
 import click
 import xml.etree.ElementTree as ET
 from lxml import etree
+from .string_with_format import StringWithFormat
 
 
 def remove_extra_whitespace(string):
@@ -59,11 +60,14 @@ class TextNode(Node):
         parts = []
         for node in self.children:
             if isinstance(node, str):
-                parts.append(node)
+                parts.append(StringWithFormat(node))
             else:
                 parts.append(node.to_text())
         try:
-            return ''.join(parts).strip()
+            content = StringWithFormat()
+            for part in parts:
+                content += part
+            return content.strip()
         except:
             print(self.children)
             print(parts)
@@ -137,20 +141,20 @@ class Subart(TextNode):
         if self.get(Snc):
             yield self
 
-
+# TODO process variants (ex: elreviĝo, disreviĝo)
 class Drv(Node):
     def __init__(self, node, extra_info=None):
         self.mrk = node.get('mrk')
         if not extra_info:
             extra_info = {}
         kap = Kap(node.find('kap'), extra_info)
-        self.kap = kap.to_text()
+        self.kap = kap.to_text().string
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
 
     def to_text(self):
         meanings = []
-        content = ''
+        content = StringWithFormat()
 
         # Kap and Fnt ignored
         for node in self.get(Gra, Uzo, Dif, Ref):
@@ -161,7 +165,8 @@ class Drv(Node):
         n_sncs = len(list(self.get(Snc)))
         for n, snc in enumerate(self.get(Snc)):
             if n_sncs > 1:
-                text = "%s. %s" % (n+1, snc.to_text())
+                text = StringWithFormat("%s. " % (n+1,))
+                text += snc.to_text()
             else:
                 text = snc.to_text()
             meanings.append(text)
@@ -172,7 +177,7 @@ class Drv(Node):
             #     text = "%s. %s" % (n+1, text)
             meanings.append(text)
 
-        content += '\n\n'.join(meanings)
+        content += StringWithFormat.join(meanings, '\n\n')
 
         for node in self.get_except(Subdrv, Snc, Gra, Uzo, Fnt, Kap, Dif, Mlg):
             if isinstance(node, Ref) and node.tip == 'dif':
@@ -198,7 +203,7 @@ class Subdrv(Node):
     def to_text(self):
         # TODO cycle letter
         letter = ord('A')
-        content = "\n\n%s. " % chr(letter)
+        content = StringWithFormat("\n\n%s. " % chr(letter))
 
         # Fnt omitted
         for node in self.get(Dif, Gra, Uzo, Ref):
@@ -217,7 +222,7 @@ class Snc(Node):
         super().__init__(node, extra_info)
 
     def to_text(self):
-        content = ''
+        content = StringWithFormat()
 
         # Fnt ignored
         for node in self.get(Gra, Uzo, Dif, Ref):
@@ -230,8 +235,9 @@ class Snc(Node):
             subs = []
             for n, subsnc in enumerate(self.get(Subsnc)):
                 text = subsnc.to_text()
-                subs.append("%s) %s" % (chr(ord('a')+n), text))
-            content += '\n\n'.join(subs)
+                text.prepend("%s) " % (chr(ord('a')+n),))
+                subs.append(text)
+            content += StringWithFormat.join(subs, '\n\n')
 
         for node in self.get_except(Gra, Uzo, Fnt, Dif, Subsnc):
             if isinstance(node, Ref) and node.tip == 'dif':
@@ -303,7 +309,9 @@ class Ref(TextNode):
             symbol = "↗"
         elif self.tip == "prt":
             symbol = "↘"
-        return "%s %s" % (symbol, super().to_text())
+        content = StringWithFormat(symbol+' ')
+        content += super().to_text()
+        return content
 
 
 class Refgrp(TextNode):

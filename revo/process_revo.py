@@ -1,4 +1,5 @@
 import re
+import json
 import sqlite3
 import glob
 from lxml import etree
@@ -44,7 +45,8 @@ def create_db():
             article_id integer,
             word text,
             mark text,
-            definition text
+            definition text,
+            format text
         )
     """)
 
@@ -74,9 +76,11 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
         found_words.append(main_word_txt)
         row_id = None
         if not dry_run:
+            content = drv.to_text()
+            tokens = (num_article, main_word_txt, drv.mrk, content.string, json.dumps(content.format))
             cursor.execute("""INSERT into words (
-                article_id, word, mark, definition)
-                values (?, ?, ?, ?)""", (num_article, main_word_txt, drv.mrk, drv.to_text()))
+                article_id, word, mark, definition, format)
+                values (?, ?, ?, ?, ?)""", tokens)
             row_id = cursor.lastrowid
 
         if verbose:

@@ -28,7 +28,7 @@ def test_article_no_drv(parser):
     derivs = list(Art(parser(xml)).derivations())
     assert len(derivs) == 1
     assert derivs[0].__class__ is Subart
-    assert derivs[0].to_text() == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
+    assert derivs[0].to_text().string == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
 
 def test_drv_multiple_kap(parser):
     xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""
@@ -48,9 +48,9 @@ def test_subdrv(parser):
             </dif>
         </subdrv>
     </drv>"""
-    assert Drv(parser(xml), {'radix': 'ad'}).to_text() == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn:"
+    assert Drv(parser(xml), {'radix': 'ad'}).to_text().string == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn:"
 
-def test_snc(parser):
+def test_snc_single(parser):
     xml = """<snc mrk="abak.0o.ARKI">
     <uzo tip="fak">ARKI</uzo>
     <dif>
@@ -58,27 +58,27 @@ def test_snc(parser):
       <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
     </dif>
     </snc>"""
-    assert Snc(parser(xml)).to_text() == 'ARKI Supera plata parto de kolona → kapitelo.'
+    assert Snc(parser(xml)).to_text().string == 'ARKI Supera plata parto de kolona → kapitelo.'
 
 
 def test_snc_no_tail_after_tld(parser):
-    assert Snc(parser('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), {"radix": "abat"}).to_text() == 'abat'
+    assert Snc(parser('<snc mrk="abat.0o"><dif><tld/></dif></snc>'), {"radix": "abat"}).to_text().string == 'abat'
 
 
 def test_snc_ignore_fnt(parser):
     xml = '<snc mrk="-"><dif>Difino <ekz>Frazo<fnt><aut>Iu</aut></fnt>.</ekz></dif></snc>'
-    assert Snc(parser(xml)).to_text() == 'Difino Frazo.'
+    assert Snc(parser(xml)).to_text().string == 'Difino Frazo.'
 
 
 def test_snc_ignore_trd(parser):
     xml = '<snc mrk="-"><dif>Difino <ekz><ind>Frazo</ind>.<trd lng="hu">Trd</trd></ekz></dif></snc>'
-    assert Snc(parser(xml)).to_text() == 'Difino Frazo.'
+    assert Snc(parser(xml)).to_text().string == 'Difino Frazo.'
 
 def test_snc_replace_tld(parser):
     xml = """<snc mrk="abat.0o">
     <dif>Monaĥejestro de <tld/>ejo.</dif>
     </snc>"""
-    assert Snc(parser(xml), {"radix": "abat"}).to_text() == 'Monaĥejestro de abatejo.'
+    assert Snc(parser(xml), {"radix": "abat"}).to_text().string == 'Monaĥejestro de abatejo.'
 
 
 def test_subsnc(parser):
@@ -87,7 +87,7 @@ def test_subsnc(parser):
         <subsnc><dif>A</dif></subsnc>
         <subsnc><dif>B</dif></subsnc>
     </snc>'''
-    assert Snc(parser(xml)).to_text() == "Uzata kiel:\n\na) A\n\nb) B"
+    assert Snc(parser(xml)).to_text().string == "Uzata kiel:\n\na) A\n\nb) B"
 
 def test_multiple_snc(parser):
     xml = '''<art>
@@ -99,7 +99,7 @@ def test_multiple_snc(parser):
         </drv>
     </art>
     '''
-    drvs = [d.to_text() for d in Art(parser(xml)).derivations()]
+    drvs = [d.to_text().string for d in Art(parser(xml)).derivations()]
     assert drvs == ["1. A\n\n2. B"]
 
 def test_dif_space_between_elements(parser):
@@ -107,4 +107,4 @@ def test_dif_space_between_elements(parser):
             <ref tip="dif" cel="fin.0ajxo.GRA">Finaĵo</ref>
             (lingvoscience: sufikso)
         </dif>'''
-    assert Dif(parser(xml)).to_text() == "→ Finaĵo (lingvoscience: sufikso)"
+    assert Dif(parser(xml)).to_text().string == "→ Finaĵo (lingvoscience: sufikso)"
