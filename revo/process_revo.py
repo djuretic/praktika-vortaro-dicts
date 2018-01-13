@@ -1,5 +1,4 @@
 import re
-import json
 import sqlite3
 import glob
 from lxml import etree
@@ -78,7 +77,7 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
         if not dry_run:
             content = drv.to_text()
             assert 'StringWithFormat' not in content.string
-            tokens = (num_article, main_word_txt, drv.mrk, content.string, json.dumps(content.format))
+            tokens = (num_article, main_word_txt, drv.mrk, content.string, content.encode_format())
             cursor.execute("""INSERT into words (
                 article_id, word, mark, definition, format)
                 values (?, ?, ?, ?, ?)""", tokens)

@@ -87,6 +87,13 @@ class StringWithFormat:
         new_string_format.format = new_format
         return new_string_format
 
+    def encode_format(self):
+        encoded = []
+        for fmt, values in self.format.items():
+            tmp_list = ['%s,%s' % item for item in values]
+            encoded.append("%s:%s" % (fmt, ';'.join(tmp_list)))
+        return '\n'.join(encoded)
+
     def __eq__(self, other):
         if isinstance(other, StringWithFormat):
             return self.string == other.string and self.format == other.format

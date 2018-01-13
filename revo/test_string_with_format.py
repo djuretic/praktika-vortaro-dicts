@@ -72,3 +72,7 @@ def test_join():
     string = StringWithFormat.join([s1, s2, s3], '-')
     assert string.string == 'a-b-c'
     assert string.format == {'italic': [(0, 1), (4, 5)]}
+
+def test_encode_format():
+    s = StringWithFormat().add_bold('Bonan').add_italic(' tagon').add_bold('!')
+    assert s.encode_format() == 'bold:0,5;11,12\nitalic:5,11'
