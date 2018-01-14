@@ -93,6 +93,10 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
     return {'id': row_id, 'words': found_words}
 
 
+def create_index(cursor):
+    cursor.execute("CREATE INDEX index_word_words ON words (word)")
+
+
 @click.command()
 @click.option('--word')
 @click.option('--limit', type=int)
@@ -114,6 +118,7 @@ def main(word, limit, verbose, dry_run):
 
             if limit and num_article >= limit:
                 break
+        create_index(cursor)
     finally:
         conn.commit()
         cursor.close()
