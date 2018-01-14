@@ -12,6 +12,8 @@ def remove_extra_whitespace(string):
     return cleaned
 
 class Node:
+    parent = None
+
     def __init__(self, node, extra_info=None):
         if extra_info is None:
             extra_info = {}
@@ -33,7 +35,7 @@ class Node:
                     self.children.append(remove_extra_whitespace(child.tail))
                 continue
             tag_class = globals()[child.tag.title()]
-            extra_info['parent'] = node
+            extra_info['parent'] = self
             self.children.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
                 if child.tag in ['ref', 'tld'] and child.tail[0] in [" ", "\n"]:
@@ -283,18 +285,22 @@ class Trd(TextNode):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.lng = node.get('lng')
+        if isinstance(self.parent, Trdgrp):
+            print('trdgrp > trd', self.parent.lng, super().to_text())
+        else:
+            print('trd', self.lng, super().to_text())
 
     # abel.xml has a trd inside a dif
     def to_text(self):
-        if self.parent.tag == 'dif':
+        if isinstance(self.parent, Dif):
             return super().to_text()
         return ''
 
 
 class Trdgrp(Node):
     def __init__(self, node, extra_info=None):
-        super().__init__(node, extra_info)
         self.lng = node.get('lng')
+        super().__init__(node, extra_info)
 
     def to_text(self):
         return ''
