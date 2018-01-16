@@ -15,7 +15,6 @@ def test_set_parent(parser):
     </art>"""
     art = Art(parser(xml))
     for tag in art.children:
-        print(tag)
         assert tag.parent == art
 
 def test_article_kap(parser):

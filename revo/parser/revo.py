@@ -76,8 +76,6 @@ class Node:
         pass
 
     def main_word(self):
-        # TODO subart and infinite depth recursion (acx.xml)
-        # check Subart.parent
         kap = getattr(self, 'kap', '')
         if not kap:
             kap = self.get_ancestor(Art).kap[0]

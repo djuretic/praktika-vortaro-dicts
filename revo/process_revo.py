@@ -11,11 +11,12 @@ import parser.revo
 def insert_translations(word_id, trads, cursor):
     if not trads:
         return
-    for lng, trad in trads.items():
-        cursor.execute(
-            "INSERT INTO translations (word_id, lng, translation) VALUES (?,?,?)",
-            (word_id, lng, " ".join(trad))
-        )
+    for word, more_trads in trads.items():
+        for lng, trad in more_trads.items():
+            cursor.execute(
+                "INSERT INTO translations (word_id, word, lng, translation) VALUES (?,?,?,?)",
+                (word_id, word, lng, " ".join(trad))
+            )
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
@@ -54,6 +55,7 @@ def create_db():
         CREATE TABLE translations (
             id integer primary key,
             word_id integer,
+            word text,
             lng text,
             translation text
         )
@@ -83,12 +85,14 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
                 values (?, ?, ?, ?, ?)""", tokens)
             row_id = cursor.lastrowid
 
+            trads = drv.translations()
+            if trads:
+                insert_translations(row_id, trads, cursor)
+
         if verbose:
             print(filename, drv.mrk, row_id)
         else:
             print(filename, drv.mrk)
-        # trads = extract_translations(drv, drv.mrk)
-        # insert_translations(row_id, trads, cursor)
 
     return {'id': row_id, 'words': found_words}
 
