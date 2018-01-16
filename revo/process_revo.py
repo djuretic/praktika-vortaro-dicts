@@ -71,7 +71,7 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
 
     found_words = []
     for drv in art.derivations():
-        main_word_txt = add_hats(getattr(drv, 'kap', art.kap[0]))
+        main_word_txt = drv.main_word()
         found_words.append(main_word_txt)
         row_id = None
         if not dry_run:

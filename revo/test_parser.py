@@ -110,3 +110,36 @@ def test_dif_space_between_elements(parser):
             (lingvoscience: sufikso)
         </dif>'''
     assert Dif(parser(xml)).to_text().string == "→ Finaĵo (lingvoscience: sufikso)"
+
+def test_trd_inside_ekz(parser):
+    xml = '''<art>
+        <kap><rad>abstin</rad>/i</kap>
+        <drv mrk="abstin.0i">
+            <kap><tld/>i</kap>
+            <gra><vspec>ntr</vspec></gra>
+            <snc>
+                <dif>Trinki ion pro medicina motivo:
+                    <ekz>
+                        <ind><tld/>ulo</ind>;
+                        <trd lng="ca">abstinent<klr> (subst.)</klr></trd>
+                        <trdgrp lng="hu">
+                            <trd>absztinens</trd>,
+                            <trd>önmegtartóztatás;</trd>
+                        </trdgrp>
+                        <trd lng="es">abstemio</trd>
+                    </ekz>
+                </dif>
+            </snc>
+            <trd lng="en">abstain</trd>
+        </drv>
+    </art>'''
+    derivs = list(Art(parser(xml)).derivations())
+    assert len(derivs) == 1
+    trds = derivs[0].translations()
+    assert trds == {
+        'abstini': {'en': ['abstain']},
+        # 'abstinulo': {
+        #     'ca': ['abstinent (subst.)'],
+        #     'hu': ['absztinens', 'önmegtartóztatás'],
+        #     'es': ['abstemio']},
+    }

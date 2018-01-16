@@ -1,6 +1,7 @@
 import click
 import xml.etree.ElementTree as ET
 from lxml import etree
+from utils import add_hats
 from .string_with_format import StringWithFormat, Format
 
 
@@ -22,7 +23,7 @@ class Node:
             self.parent = extra_info.get('parent')
 
     def __repr__(self):
-        keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items())
+        keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items() if k != 'parent')
         return "<%s %s>" % (self.__class__.__name__, keys)
 
     def parse_children(self, node, extra_info=None):
@@ -53,8 +54,47 @@ class Node:
             if tag.__class__ not in args:
                 yield tag
 
+    def get_recursive(self, *args):
+        if not hasattr(self, 'children'):
+            return
+        for tag in self.children:
+            if tag.__class__ in args:
+                yield tag
+            elif isinstance(tag, str):
+                continue
+            else:
+                for nested_tag in tag.get_recursive(*args):
+                    yield nested_tag
+
+    def get_ancestor(self, *args):
+        if not self.parent:
+            return None
+        elif self.parent.__class__ in args:
+            return self.parent
+        return self.parent.get_ancestor(*args)
+
     def to_text(self):
         pass
+
+    def main_word(self):
+        kap = getattr(self, 'kap', '')
+        if not kap:
+            kap = self.get_ancestor(Art).kap[0]
+        return add_hats(kap)
+
+    def translations(self):
+        trds = {}
+        for tag in self.get_recursive(Trd, Trdgrp):
+            if isinstance(tag.parent, Drv):
+                main_word = tag.parent.main_word()
+                if main_word not in trds:
+                    trds[main_word] = {}
+
+                lng, texts = tag.parse_trd()
+                if isinstance(texts, str):
+                    texts = [texts]
+                trds[main_word][lng] = texts
+        return trds
 
 
 class TextNode(Node):
@@ -95,7 +135,7 @@ class Art(Node):
     def derivations(self):
         for subart in self.get(Subart):
             for drv in subart.derivations():
-                    yield drv
+                yield drv
         for drv in self.get(Drv):
             yield drv
         assert not list(self.get(Snc))
@@ -285,16 +325,15 @@ class Trd(TextNode):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.lng = node.get('lng')
-        if isinstance(self.parent, Trdgrp):
-            print('trdgrp > trd', self.parent.lng, super().to_text())
-        else:
-            print('trd', self.lng, super().to_text())
 
     # abel.xml has a trd inside a dif
     def to_text(self):
         if isinstance(self.parent, Dif):
             return super().to_text()
         return ''
+
+    def parse_trd(self):
+        return (self.lng, super().to_text().string)
 
 
 class Trdgrp(Node):
@@ -304,6 +343,9 @@ class Trdgrp(Node):
 
     def to_text(self):
         return ''
+
+    def parse_trd(self):
+        return (self.lng, [trd.parse_trd()[1] for trd in self.get(Trd)])
 
 
 class Ref(TextNode):
