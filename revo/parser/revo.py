@@ -18,9 +18,8 @@ class Node:
     def __init__(self, node, extra_info=None):
         if extra_info is None:
             extra_info = {}
+        self.parent = extra_info.get('parent')
         self.parse_children(node, extra_info)
-        if extra_info:
-            self.parent = extra_info.get('parent')
 
     def __repr__(self):
         keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items() if k != 'parent')
@@ -77,6 +76,8 @@ class Node:
         pass
 
     def main_word(self):
+        # TODO subart and infinite depth recursion (acx.xml)
+        # check Subart.parent
         kap = getattr(self, 'kap', '')
         if not kap:
             kap = self.get_ancestor(Art).kap[0]

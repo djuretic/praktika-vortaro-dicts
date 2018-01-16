@@ -6,6 +6,18 @@ import pytest
 def parser():
     return lambda xml:  etree.fromstring(xml)
 
+def test_set_parent(parser):
+    xml = """<art>
+    <kap>-<rad>aĉ</rad>/</kap>
+    <subart>
+        <drv><kap>-<tld/></kap></drv>
+    </subart>
+    </art>"""
+    art = Art(parser(xml))
+    for tag in art.children:
+        print(tag)
+        assert tag.parent == art
+
 def test_article_kap(parser):
     xml = """<art>
         <kap>
