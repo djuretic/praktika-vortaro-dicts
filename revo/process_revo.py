@@ -4,7 +4,7 @@ import glob
 from lxml import etree
 import click
 
-from utils import add_hats
+from utils import add_hats, list_languages
 import parser.revo
 
 
@@ -106,7 +106,12 @@ def create_index(cursor):
 @click.option('--limit', type=int)
 @click.option('--verbose', is_flag=True)
 @click.option('--dry-run', is_flag=True)
-def main(word, limit, verbose, dry_run):
+@click.option('--show-languages', is_flag=True)
+def main(word, limit, verbose, dry_run, show_languages):
+    if show_languages:
+        list_languages()
+        return
+
     conn = create_db()
     cursor = conn.cursor()
 

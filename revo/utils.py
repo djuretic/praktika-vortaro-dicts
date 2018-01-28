@@ -1,3 +1,5 @@
+import xml.etree.ElementTree as ET
+
 MAPPING = {
     'C': 'Ĉ',
     'G': 'Ĝ',
@@ -30,3 +32,12 @@ def add_hats(word):
     if pos == len(word) - 1:
         res += word[-1]
     return res
+
+def list_languages():
+    tree = ET.parse("./cfg/lingvoj.xml")
+    langs = tree.findall('lingvo')
+    alphabet = 'abcĉdefgĝhĥijĵklmnoprsŝtuŭvz/-'
+    # normal sort puts ĉ, ĝ,... at the end
+    langs = sorted(langs, key=lambda x: [alphabet.index(c) for c in x.text])
+    for n, lang in enumerate(langs, 1):
+        print(n, lang.get('kodo'), lang.text)
