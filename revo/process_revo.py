@@ -99,6 +99,7 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
 
 def create_index(cursor):
     cursor.execute("CREATE INDEX index_word_words ON words (word)")
+    cursor.execute("CREATE INDEX index_translations ON translations (lng, translation)")
 
 
 @click.command()
