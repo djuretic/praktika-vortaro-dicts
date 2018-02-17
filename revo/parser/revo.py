@@ -398,10 +398,10 @@ class Rim(TextNode):
     def to_text(self):
         string = super().to_text()
         if self.num:
-            content = StringWithFormat().add_bold("Rim. %s: " % self.num)
+            content = StringWithFormat().add_bold("\n\nRim. %s: " % self.num)
             content += string
             return content
-        return StringWithFormat().add_bold("Rim. ").add(string)
+        return StringWithFormat().add_bold("\n\nRim. ").add(string)
 
 
 class Aut(TextNode):
