@@ -71,7 +71,7 @@ def test_snc_single(parser):
       <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
     </dif>
     </snc>"""
-    assert Snc(parser(xml)).to_text().string == 'ARKI Supera plata parto de kolona → kapitelo.'
+    assert Snc(parser(xml)).to_text().string == 'ARKI Supera plata parto de kolona kapitelo.'
 
 
 def test_snc_no_tail_after_tld(parser):
@@ -120,7 +120,7 @@ def test_dif_space_between_elements(parser):
             <ref tip="dif" cel="fin.0ajxo.GRA">Finaĵo</ref>
             (lingvoscience: sufikso)
         </dif>'''
-    assert Dif(parser(xml)).to_text().string == "→ Finaĵo (lingvoscience: sufikso)"
+    assert Dif(parser(xml)).to_text().string == "Finaĵo (lingvoscience: sufikso)"
 
 def test_trd_inside_ekz(parser):
     xml = '''<art>

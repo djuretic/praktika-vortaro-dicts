@@ -352,16 +352,16 @@ class Ref(TextNode):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
 
-    def to_text(self):
-        # TODO hide arrow
-        symbol = "→"
-        if self.tip == 'malprt':
-            symbol = "↗"
-        elif self.tip == "prt":
-            symbol = "↘"
-        content = StringWithFormat(symbol+' ')
-        content += super().to_text()
-        return content
+    # def to_text(self):
+    #     # TODO hide arrow
+    #     symbol = "→"
+    #     if self.tip == 'malprt':
+    #         symbol = "↗"
+    #     elif self.tip == "prt":
+    #         symbol = "↘"
+    #     content = StringWithFormat(symbol+' ')
+    #     content += super().to_text()
+    #     return content
 
 
 class Refgrp(TextNode):
