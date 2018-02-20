@@ -12,11 +12,12 @@ def insert_translations(word_id, trads, cursor):
     if not trads:
         return
     for word, more_trads in trads.items():
-        for lng, trad in more_trads.items():
-            cursor.execute(
-                "INSERT INTO translations (word_id, word, lng, translation) VALUES (?,?,?,?)",
-                (word_id, word, lng, " ".join(trad))
-            )
+        for lng, translations in more_trads.items():
+            for translation in translations:
+                cursor.execute(
+                    "INSERT INTO translations (word_id, word, lng, translation) VALUES (?,?,?,?)",
+                    (word_id, word, lng, translation)
+                )
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
