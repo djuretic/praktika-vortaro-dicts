@@ -6,7 +6,7 @@ import itertools
 from lxml import etree
 import click
 
-from utils import add_hats, list_languages
+from utils import add_hats, list_languages, get_languages
 import parser.revo
 
 
@@ -63,6 +63,21 @@ def create_db():
     return conn
 
 def create_langs_tables(cursor, langs):
+    cursor.execute("""
+        CREATE TABLE languages (
+            id integer primary key,
+            code text,
+            name text
+        )
+    """)
+
+    lang_names = {
+        lang_def['code']: (order, lang_def['name'])
+        for order, lang_def in enumerate(get_languages())}
+    # Normal sort won't consider ĉ, ŝ, ...,
+    # get_languages() gives the correct order
+    langs = sorted(langs, key=lambda x: lang_names[x][0])
+
     for lang in langs:
         cursor.execute("""
         CREATE TABLE translations_{lang} (
@@ -72,6 +87,12 @@ def create_langs_tables(cursor, langs):
             translation text
         )
         """.format(lang=lang))
+
+        cursor.execute("""
+            INSERT INTO languages (code, name)
+            VALUES (?, ?)
+        """, (lang, lang_names[lang][1]))
+
 
 def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
     art = None
