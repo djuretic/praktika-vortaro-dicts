@@ -1,4 +1,5 @@
 import re
+import os
 import sqlite3
 import glob
 from lxml import etree
@@ -37,9 +38,10 @@ def entities_dict():
 
 
 def create_db():
-    conn = sqlite3.connect('vortaro.db')
+    db_filename = 'vortaro.db'
+    os.remove(db_filename)
+    conn = sqlite3.connect(db_filename)
     c = conn.cursor()
-    c.execute('DROP TABLE if exists words')
     c.execute("""
         CREATE TABLE words (
             id integer primary key,
@@ -51,7 +53,6 @@ def create_db():
         )
     """)
 
-    c.execute('DROP TABLE if exists translations')
     c.execute("""
         CREATE TABLE translations (
             id integer primary key,
@@ -73,6 +74,7 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
         raise
 
     found_words = []
+    entries = []
     for drv in art.derivations():
         main_word_txt = drv.main_word()
         found_words.append(main_word_txt)
@@ -80,27 +82,37 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
         if not dry_run:
             content = drv.to_text()
             assert 'StringWithFormat' not in content.string
-            tokens = (num_article, main_word_txt, drv.mrk, content.string, content.encode_format())
-            cursor.execute("""INSERT into words (
-                article_id, word, mark, definition, format)
-                values (?, ?, ?, ?, ?)""", tokens)
-            row_id = cursor.lastrowid
-
-            trads = drv.translations()
-            if trads:
-                insert_translations(row_id, trads, cursor)
+            entries.append(
+                dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
+                definition=content.string, format=content.encode_format(),
+                trads=drv.translations()))
 
         if verbose:
             print(filename, drv.mrk, row_id)
         else:
             print(filename, drv.mrk)
 
-    return {'id': row_id, 'words': found_words}
+    return entries
 
 
 def create_index(cursor):
     cursor.execute("CREATE INDEX index_word_words ON words (word)")
     cursor.execute("CREATE INDEX index_translations ON translations (lng, translation)")
+
+
+def insert_entries(entries, cursor):
+    entries = sorted(entries, key=lambda x: x['word'].lower())
+    for entry in entries:
+        print(entry['word'])
+        tokens = [entry[x] for x in ('article_id', 'word', 'mark', 'definition', 'format')]
+        cursor.execute("""INSERT into words (
+            article_id, word, mark, definition, format)
+            values (?, ?, ?, ?, ?)""", tokens)
+        row_id = cursor.lastrowid
+
+        trads = entry['trads']
+        if trads:
+            insert_translations(row_id, trads, cursor)
 
 
 @click.command()
@@ -117,6 +129,7 @@ def main(word, limit, verbose, dry_run, show_languages):
     conn = create_db()
     cursor = conn.cursor()
 
+    entries = []
     try:
         files = glob.glob('./xml/*.xml')
         files.sort()
@@ -124,11 +137,15 @@ def main(word, limit, verbose, dry_run, show_languages):
         for filename in files:
             if word and word not in filename:
                 continue
-            parse_article(filename, num_article, cursor, verbose, dry_run)
+            parsed_entries = parse_article(
+                filename, num_article, cursor, verbose, dry_run)
+            entries += parsed_entries
             num_article += 1
 
             if limit and num_article >= limit:
                 break
+
+        insert_entries(entries, cursor)
         create_index(cursor)
     finally:
         conn.commit()
