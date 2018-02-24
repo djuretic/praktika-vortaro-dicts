@@ -33,11 +33,15 @@ def add_hats(word):
         res += word[-1]
     return res
 
-def list_languages():
+def get_languages():
     tree = ET.parse("./cfg/lingvoj.xml")
     langs = tree.findall('lingvo')
     alphabet = 'abcĉdefgĝhĥijĵklmnoprsŝtuŭvz/-'
     # normal sort puts ĉ, ĝ,... at the end
     langs = sorted(langs, key=lambda x: [alphabet.index(c) for c in x.text])
+    return [{'code': lang.get('kodo'), 'name': lang.text } for lang in langs]
+
+def list_languages():
+    langs = get_languages()
     for n, lang in enumerate(langs, 1):
-        print(n, lang.get('kodo'), lang.text)
+        print(n, lang['code'], lang['name'])

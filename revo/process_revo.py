@@ -2,6 +2,7 @@ import re
 import os
 import sqlite3
 import glob
+import itertools
 from lxml import etree
 import click
 
@@ -9,16 +10,15 @@ from utils import add_hats, list_languages
 import parser.revo
 
 
-def insert_translations(word_id, trads, cursor):
-    if not trads:
-        return
-    for word, more_trads in trads.items():
-        for lng, translations in more_trads.items():
-            for translation in translations:
-                cursor.execute(
-                    "INSERT INTO translations (word_id, word, lng, translation) VALUES (?,?,?,?)",
-                    (word_id, word, lng, translation)
-                )
+def insert_translations(trads, cursor):
+    for translation in trads:
+        for word in translation['data']:
+            cursor.execute(
+                """INSERT INTO translations_{code}
+                (word_id, word, translation)
+                VALUES (?,?,?)""".format(code=translation['lng']),
+                (translation['row_id'], translation['word'], word)
+            )
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
@@ -53,17 +53,18 @@ def create_db():
         )
     """)
 
-    c.execute("""
-        CREATE TABLE translations (
+    return conn
+
+def create_langs_tables(cursor, langs):
+    for lang in langs:
+        cursor.execute("""
+        CREATE TABLE translations_{lang} (
             id integer primary key,
             word_id integer,
             word text,
-            lng text,
             translation text
         )
-    """)
-    c.close()
-    return conn
+        """.format(lang=lang))
 
 def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
     art = None
@@ -97,11 +98,12 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
 
 def create_index(cursor):
     cursor.execute("CREATE INDEX index_word_words ON words (word)")
-    cursor.execute("CREATE INDEX index_translations ON translations (lng, translation)")
+    # cursor.execute("CREATE INDEX index_translations ON translations (lng, translation)")
 
 
 def insert_entries(entries, cursor):
     entries = sorted(entries, key=lambda x: x['word'].lower())
+    translations = []
     for entry in entries:
         print(entry['word'])
         tokens = [entry[x] for x in ('article_id', 'word', 'mark', 'definition', 'format')]
@@ -112,7 +114,22 @@ def insert_entries(entries, cursor):
 
         trads = entry['trads']
         if trads:
-            insert_translations(row_id, trads, cursor)
+            for word, more_trads in trads.items():
+                for lng, trans_data in more_trads.items():
+                    translations.append(dict(row_id=row_id, word=word, lng=lng, data=trans_data))
+
+    translations = sorted(translations, key= lambda x: (x['lng'], x['word']))
+    shown_langs = []
+    for lng, g in itertools.groupby(translations, key=lambda x: x['lng']):
+        count = len(list(g))
+        if count >= 100:
+            print(lng, count)
+            shown_langs.append(lng)
+
+    create_langs_tables(cursor, shown_langs)
+    translations = [t for t in translations if t['lng'] in shown_langs]
+    insert_translations(translations, cursor)
+
 
 
 @click.command()
