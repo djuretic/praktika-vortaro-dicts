@@ -11,14 +11,21 @@ import parser.revo
 
 
 def insert_translations(trads, cursor):
+    # flatten
+    all_trans = []
     for translation in trads:
         for word in translation['data']:
-            cursor.execute(
-                """INSERT INTO translations_{code}
-                (word_id, word, translation)
-                VALUES (?,?,?)""".format(code=translation['lng']),
-                (translation['row_id'], translation['word'], word)
-            )
+            all_trans.append(dict(translation=word, **translation))
+
+    all_trans.sort(key=lambda x: (x['lng'], x['translation']))
+
+    for translation in all_trans:
+        cursor.execute(
+            """INSERT INTO translations_{code}
+            (word_id, word, translation)
+            VALUES (?,?,?)""".format(code=translation['lng']),
+            (translation['row_id'], translation['word'], translation['translation'])
+        )
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
@@ -118,7 +125,7 @@ def insert_entries(entries, cursor):
                 for lng, trans_data in more_trads.items():
                     translations.append(dict(row_id=row_id, word=word, lng=lng, data=trans_data))
 
-    translations = sorted(translations, key= lambda x: (x['lng'], x['word']))
+    translations = sorted(translations, key= lambda x: x['lng'])
     shown_langs = []
     for lng, g in itertools.groupby(translations, key=lambda x: x['lng']):
         count = len(list(g))
