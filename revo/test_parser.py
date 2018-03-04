@@ -51,6 +51,20 @@ def test_drv_kap(parser):
     xml = '<drv mrk="a1.0.volvita"><kap><tld/> volvita</kap></drv>'
     assert Drv(parser(xml), {'radix': 'a'}).kap == 'a volvita'
 
+def test_drv_whitespace_after_gra_and_ref(parser):
+    xml = """<drv mrk="abol.0i">
+        <kap><tld/>i</kap>
+        <gra><vspec>tr</vspec></gra>
+        <snc mrk="abol.0i.JUR">
+            <uzo tip="fak">JUR</uzo>
+            <ref tip="dif" cel="abolic.0i">abolicii</ref>
+            <ekz>
+            sklaveco estis <tld/>ita en Brazilo en 1888.
+            </ekz>
+        </snc>
+    </drv>"""
+    assert Drv(parser(xml), {'radix': 'abol'}).to_text().string == '(tr) JUR abolicii sklaveco estis abolita en Brazilo en 1888. '
+
 def test_subdrv(parser):
     xml = """<drv mrk="ad.0">
         <kap><ofc>*</ofc>-<tld/></kap>

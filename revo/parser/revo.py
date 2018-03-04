@@ -40,10 +40,22 @@ class Node:
             extra_info['parent'] = self
             self.children.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
-                if child.tag in ['ref'] and child.tail[0] in [" ", "\n"]:
-                    self.children.append(" ")
                 self.children.append(remove_extra_whitespace(child.tail))
-        # print('node children:', self.children)
+        self.children = self.add_whitespace_nodes_to_children()
+        # print(node.tag, '- children:', self.children)
+
+    def add_whitespace_nodes_to_children(self):
+        children = []
+        for n, child in enumerate(self.children):
+            children.append(child)
+            if isinstance(child, Ref) and n < len(self.children) - 1:
+                next_node = self.children[n+1]
+                # print("DETECTED ref, next:", next_node, next_node.__class__)
+                if isinstance(next_node, str) and next_node[0] != '.':
+                    children.append(' ')
+                elif not isinstance(next_node, str):
+                    children.append(' ')
+        return children
 
     def get(self, *args):
         "Get nodes based on their class"
@@ -114,6 +126,7 @@ class TextNode(Node):
             content = StringWithFormat()
             for part in parts:
                 content += part
+            # print(self.children, "\n", parts, "\n")
             return content.apply_format(self.base_format)
         except:
             print(self.children)
@@ -231,16 +244,11 @@ class Drv(Node):
         for node in self.get_except(Subdrv, Snc, Gra, Uzo, Fnt, Kap, Dif, Mlg):
             if isinstance(node, Ref) and node.tip == 'dif':
                 continue
-            content += node.to_text()
-
-        # if self.rim:
-        #     # multiple seen on akuzat.xml
-        #     rim_txt = [rim.to_text() for rim in self.rim]
-        #     content += "\n\n%s" % '\n\n'.join(rim_txt)
-        # if self.ref:
-        #     # multiple seen on amik.xml
-        #     ref_txt = [ref.to_text() for ref in self.ref]
-        #     content += "\n\n%s" % (' '.join(ref_txt))
+            if isinstance(node, str):
+                # Nodes added by hand in add_whitespace_nodes_to_children
+                content += node
+            else:
+                content += node.to_text()
 
         return content
 
@@ -293,7 +301,11 @@ class Snc(Node):
         for node in self.get_except(Gra, Uzo, Fnt, Dif, Subsnc):
             if isinstance(node, Ref) and node.tip == 'dif':
                 continue
-            content += node.to_text()
+            if isinstance(node, str):
+                # Nodes added by hand in add_whitespace_nodes_to_children
+                content += node
+            else:
+                content += node.to_text()
 
         return content
 
@@ -359,8 +371,9 @@ class Ref(TextNode):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
 
-    # def to_text(self):
-    #     # TODO hide arrow
+    def to_text(self):
+        return super().to_text()
+    #     # TODO add link
     #     symbol = "→"
     #     if self.tip == 'malprt':
     #         symbol = "↗"
