@@ -10,6 +10,8 @@ def remove_extra_whitespace(string):
     # Preserve trailing whitespace
     if string and string[-1] == ' ':
         cleaned += ' '
+    if string and string[0] == ' ':
+        cleaned = ' ' +  cleaned
     return cleaned
 
 class Node:
@@ -38,9 +40,10 @@ class Node:
             extra_info['parent'] = self
             self.children.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
-                if child.tag in ['ref', 'tld'] and child.tail[0] in [" ", "\n"]:
+                if child.tag in ['ref'] and child.tail[0] in [" ", "\n"]:
                     self.children.append(" ")
                 self.children.append(remove_extra_whitespace(child.tail))
+        # print('node children:', self.children)
 
     def get(self, *args):
         "Get nodes based on their class"
@@ -111,7 +114,7 @@ class TextNode(Node):
             content = StringWithFormat()
             for part in parts:
                 content += part
-            return content.strip().apply_format(self.base_format)
+            return content.apply_format(self.base_format)
         except:
             print(self.children)
             print(parts)

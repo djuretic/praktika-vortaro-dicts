@@ -61,7 +61,7 @@ def test_subdrv(parser):
             </dif>
         </subdrv>
     </drv>"""
-    assert Drv(parser(xml), {'radix': 'ad'}).to_text().string == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn:"
+    assert Drv(parser(xml), {'radix': 'ad'}).to_text().string == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn: "
 
 def test_snc_single(parser):
     xml = """<snc mrk="abak.0o.ARKI">
@@ -71,7 +71,7 @@ def test_snc_single(parser):
       <ref tip="vid" cel="kapite.0o">kapitelo</ref>.
     </dif>
     </snc>"""
-    assert Snc(parser(xml)).to_text().string == 'ARKI Supera plata parto de kolona kapitelo.'
+    assert Snc(parser(xml)).to_text().string == 'ARKI Supera plata parto de kolona kapitelo. '
 
 
 def test_snc_no_tail_after_tld(parser):
@@ -93,6 +93,19 @@ def test_snc_replace_tld(parser):
     </snc>"""
     assert Snc(parser(xml), {"radix": "abat"}).to_text().string == 'Monaĥejestro de abatejo.'
 
+def test_snc_whitespace(parser):
+    xml = """<snc>
+    <dif>
+        Amata:
+        <ekz>
+            <tld/>a patrino;
+        </ekz>
+        <ekz>
+            nia <ind><tld/>memora</ind> majstro
+        </ekz>
+    </dif></snc>
+    """
+    assert Snc(parser(xml), {"radix": "kar"}).to_text().string == 'Amata: kara patrino; nia karmemora majstro '
 
 def test_subsnc(parser):
     xml = '''<snc mrk="-">
@@ -120,7 +133,7 @@ def test_dif_space_between_elements(parser):
             <ref tip="dif" cel="fin.0ajxo.GRA">Finaĵo</ref>
             (lingvoscience: sufikso)
         </dif>'''
-    assert Dif(parser(xml)).to_text().string == "Finaĵo (lingvoscience: sufikso)"
+    assert Dif(parser(xml)).to_text().string == "Finaĵo (lingvoscience: sufikso) "
 
 def test_trd_inside_ekz(parser):
     xml = '''<art>
