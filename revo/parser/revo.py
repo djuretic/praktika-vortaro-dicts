@@ -208,6 +208,8 @@ class Drv(Node):
             if isinstance(node, Ref) and node.tip != 'dif':
                 continue
             content += node.to_text()
+            if isinstance(node, Gra):
+                content += ' '
 
         n_sncs = len(list(self.get(Snc)))
         for n, snc in enumerate(self.get(Snc)):
@@ -276,6 +278,8 @@ class Snc(Node):
             if isinstance(node, Ref) and node.tip != 'dif':
                 continue
             content += node.to_text()
+            if isinstance(node, Gra):
+                content += ' '
 
         if list(self.get(Subsnc)):
             content += '\n\n'
