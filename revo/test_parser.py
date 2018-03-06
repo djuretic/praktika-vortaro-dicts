@@ -121,6 +121,17 @@ def test_snc_whitespace(parser):
     """
     assert Snc(parser(xml), {"radix": "kar"}).to_text().string == 'Amata: kara patrino; nia karmemora majstro '
 
+def test_snc_no_more_whitespace_after_ref(parser):
+    xml = """<snc>
+        <dif>
+            <ref tip="lst" cel="famili.0o.BIO"
+                lst="voko:zoologiaj_familioj">Familio</ref> el la ordo
+            <ref tip="malprt" cel="best.rabo0oj">rabobestoj</ref>
+            (<trd lng="la">Canidae</trd>).
+        </dif>
+    </snc>"""
+    assert Snc(parser(xml), {"radix": "hunded"}).to_text().string == 'Familio el la ordo rabobestoj (Canidae). '
+
 def test_subsnc(parser):
     xml = '''<snc mrk="-">
         <dif>Uzata kiel:</dif>
