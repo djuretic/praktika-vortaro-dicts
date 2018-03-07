@@ -51,7 +51,7 @@ class Node:
             if isinstance(child, Ref) and n < len(self.children) - 1:
                 next_node = self.children[n+1]
                 # print("DETECTED ref, next:", next_node, next_node.__class__)
-                if isinstance(next_node, str) and next_node[0] not in ('.', ' '):
+                if isinstance(next_node, str) and next_node[0] not in ". ,;:":
                     children.append(' ')
                 elif not isinstance(next_node, str):
                     children.append(' ')
