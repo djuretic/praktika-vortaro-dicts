@@ -107,6 +107,12 @@ def test_snc_replace_tld(parser):
     </snc>"""
     assert Snc(parser(xml), {"radix": "abat"}).to_text().string == 'Monaĥejestro de abatejo.'
 
+def test_snc_replace_tld_lit(parser):
+    xml = """<snc mrk="abat.0o">
+    <dif>Monaĥejestro de <tld lit="A"/>ejo.</dif>
+    </snc>"""
+    assert Snc(parser(xml), {"radix": "abat"}).to_text().string == 'Monaĥejestro de Abatejo.'
+
 def test_snc_whitespace(parser):
     xml = """<snc>
     <dif>

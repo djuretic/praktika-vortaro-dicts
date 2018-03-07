@@ -399,10 +399,13 @@ class Ekz(TextNode):
 class Tld(Node):
     def __init__(self, node, extra_info=None):
         self.radix = None
+        self.lit = node.get('lit') or ''
         if extra_info:
             self.radix = extra_info.get('radix')
 
     def to_text(self):
+        if self.lit and self.radix:
+            return self.lit + self.radix[1:]
         return self.radix or '-----'
 
 # found in amik.xml
