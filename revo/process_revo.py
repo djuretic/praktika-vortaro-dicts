@@ -28,22 +28,6 @@ def insert_translations(trads, cursor):
         )
 
 
-# https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
-def entities_dict():
-    entities = {}
-
-    with open('dtd/vokosgn.dtd', 'rb') as f:
-        dtd = etree.DTD(f)
-        for entity in dtd.iterentities():
-            entities[entity.name] = entity.content
-
-    with open('dtd/vokomll.dtd', 'rb') as f:
-        dtd = etree.DTD(f)
-        for entity in dtd.iterentities():
-            entities[entity.name] = entity.content
-    return entities
-
-
 def create_db():
     db_filename = 'vortaro.db'
     os.remove(db_filename)
