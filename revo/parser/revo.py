@@ -94,7 +94,7 @@ class Node:
         kap = getattr(self, 'kap', '')
         if not kap:
             kap = self.get_ancestor(Art).kap[0]
-        return add_hats(kap)
+        return add_hats(kap.strip())
 
     def translations(self):
         trds = {}
