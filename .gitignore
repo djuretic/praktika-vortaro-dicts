@@ -3,5 +3,7 @@
 *.xml
 *.pyc
 __pycache__
+fabfile.py
+/*.sh
 revo/*/
 !revo/parser

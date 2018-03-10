@@ -146,11 +146,12 @@ def insert_entries(entries, cursor):
 
 @click.command()
 @click.option('--word')
+@click.option('--xml-file')
 @click.option('--limit', type=int)
 @click.option('--verbose', is_flag=True)
 @click.option('--dry-run', is_flag=True)
 @click.option('--show-languages', is_flag=True)
-def main(word, limit, verbose, dry_run, show_languages):
+def main(word, xml_file, limit, verbose, dry_run, show_languages):
     if show_languages:
         list_languages()
         return
@@ -160,8 +161,13 @@ def main(word, limit, verbose, dry_run, show_languages):
 
     entries = []
     try:
-        files = glob.glob('./xml/*.xml')
+        files = []
+        if xml_file:
+            files = [xml_file]
+        else:
+            files = glob.glob('./xml/*.xml')
         files.sort()
+
         num_article = 1
         for filename in files:
             if word and word not in filename:
