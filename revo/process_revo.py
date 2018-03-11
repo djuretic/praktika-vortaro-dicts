@@ -39,6 +39,7 @@ def create_db():
             article_id integer,
             word text,
             mark text,
+            position integer,
             definition text,
             format text
         )
@@ -88,7 +89,7 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
 
     found_words = []
     entries = []
-    for drv in art.derivations():
+    for pos, drv in enumerate(art.derivations(), 1):
         main_word_txt = drv.main_word()
         found_words.append(main_word_txt)
         row_id = None
@@ -98,7 +99,7 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
             entries.append(
                 dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
                 definition=content.string, format=content.encode_format(),
-                trads=drv.translations()))
+                trads=drv.translations(), position=pos))
 
         if verbose:
             print(filename, drv.mrk, row_id)
@@ -118,10 +119,10 @@ def insert_entries(entries, cursor):
     translations = []
     for entry in entries:
         print(entry['word'])
-        tokens = [entry[x] for x in ('article_id', 'word', 'mark', 'definition', 'format')]
+        tokens = [entry[x] for x in ('article_id', 'position', 'word', 'mark', 'definition', 'format')]
         cursor.execute("""INSERT into words (
-            article_id, word, mark, definition, format)
-            values (?, ?, ?, ?, ?)""", tokens)
+            article_id, position, word, mark, definition, format)
+            values (?, ?, ?, ?, ?, ?)""", tokens)
         row_id = cursor.lastrowid
 
         trads = entry['trads']
