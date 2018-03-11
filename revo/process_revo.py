@@ -33,6 +33,7 @@ def create_db():
     os.remove(db_filename)
     conn = sqlite3.connect(db_filename)
     c = conn.cursor()
+    # position: relative order inside the article
     c.execute("""
         CREATE TABLE words (
             id integer primary key,

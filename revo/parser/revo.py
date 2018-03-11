@@ -1,7 +1,7 @@
 import click
 import xml.etree.ElementTree as ET
 from lxml import etree
-from utils import add_hats
+from utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
 
 
@@ -233,10 +233,11 @@ class Drv(Node):
                 text = snc.to_text()
             meanings.append(text)
 
-        for n, subdrv in enumerate(self.get(Subdrv)):
+        for n, subdrv in letter_enumerate(self.get(Subdrv)):
             text = subdrv.to_text()
-            # if len(self.snc) > 1:
-            #     text = "%s. %s" % (n+1, text)
+            text.prepend("%s. " % n.upper())
+            if n == 'a' and (meanings or len(content)):
+                text.prepend('\n\n')
             meanings.append(text)
 
         content += StringWithFormat.join(meanings, '\n\n')
@@ -258,13 +259,22 @@ class Subdrv(Node):
         self.parse_children(node, extra_info)
 
     def to_text(self):
-        # TODO cycle letter
-        letter = ord('A')
-        content = StringWithFormat("\n\n%s. " % chr(letter))
+        content = StringWithFormat()
 
         # Fnt omitted
         for node in self.get(Dif, Gra, Uzo, Ref):
-            if isinstance(node, Ref) and ref.tip != 'dif':
+            if isinstance(node, Ref) and node.tip != 'dif':
+                continue
+            content += node.to_text()
+
+        for n, snc in enumerate(self.get(Snc), 1):
+            text = snc.to_text()
+            text.prepend("%s. " % n)
+            text.prepend("\n\n")
+            content += text
+
+        for node in self.get_except(Snc, Gra, Uzo, Fnt, Dif, Ref):
+            if isinstance(node, Ref) and node.tip == 'dif':
                 continue
             content += node.to_text()
         return content
@@ -292,9 +302,9 @@ class Snc(Node):
         if list(self.get(Subsnc)):
             content += '\n\n'
             subs = []
-            for n, subsnc in enumerate(self.get(Subsnc)):
+            for n, subsnc in letter_enumerate(self.get(Subsnc)):
                 text = subsnc.to_text()
-                text.prepend("%s) " % (chr(ord('a')+n),))
+                text.prepend("%s) " % n)
                 subs.append(text)
             content += StringWithFormat.join(subs, '\n\n')
 

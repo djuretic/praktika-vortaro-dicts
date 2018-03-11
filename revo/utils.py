@@ -45,3 +45,7 @@ def list_languages():
     langs = get_languages()
     for n, lang in enumerate(langs, 1):
         print(n, lang['code'], lang['name'])
+
+def letter_enumerate(iterable):
+    for n, elem in enumerate(iterable):
+        yield (chr(ord('a')+n), elem)

@@ -77,6 +77,21 @@ def test_subdrv(parser):
     </drv>"""
     assert Drv(parser(xml), {'radix': 'ad'}).to_text().string == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn: "
 
+def test_subdrv_snc(parser):
+    xml = """<drv mrk="ir.0ado">
+        <kap><tld/>ado, <var><kap><tld/>o</kap></var></kap>
+        <subdrv>
+            <dif>
+            Ago <tld/>i:
+            </dif>
+            <snc mrk="ir.0ado.deAL"><ekz>Frazo</ekz></snc>
+            <snc mrk="ir.0ado.al"><ekz>Alia frazo</ekz></snc>
+        </subdrv>
+        <subdrv><dif>Maniero (...)</dif></subdrv>
+    </drv>
+    """
+    assert Drv(parser(xml), {'radix': 'ir'}).to_text().string == "A. Ago iri: \n\n1. Frazo\n\n2. Alia frazo\n\nB. Maniero (...)"
+
 def test_snc_single(parser):
     xml = """<snc mrk="abak.0o.ARKI">
     <uzo tip="fak">ARKI</uzo>
