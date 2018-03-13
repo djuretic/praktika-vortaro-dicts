@@ -412,6 +412,7 @@ class Tld(Node):
         self.lit = node.get('lit') or ''
         if extra_info:
             self.radix = extra_info.get('radix')
+        self.radix = self.radix.strip()
 
     def to_text(self):
         if self.lit and self.radix:
