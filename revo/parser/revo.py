@@ -55,6 +55,9 @@ class Node:
                     children.append(' ')
                 elif not isinstance(next_node, str):
                     children.append(' ')
+            elif isinstance(child, Klr) and n < len(self.children) - 1 and child.children:
+                if isinstance(child.children[-1], str) and child.children[-1][-1] != ' ':
+                    children.append(' ')
         return children
 
     def get(self, *args):

@@ -213,3 +213,24 @@ def test_trd_inside_ekz(parser):
         #     'hu': ['absztinens', 'önmegtartóztatás'],
         #     'es': ['abstemio']},
     }
+
+def test_trd_preserves_whitespace(parser):
+    # pl words come from abdiki
+    xml = """<drv mrk="telefo.posx0o">
+        <kap>poŝ<tld/>o</kap>
+        <trdgrp lng="es">
+            <trd><klr tip="amb">teléfono</klr> <ind>móvil</ind></trd>,
+            <trd><klr tip="amb">teléfono</klr> <ind>celular</ind></trd>
+        </trdgrp>
+        <trdgrp lng="pl">
+           <trd><klr>dać </klr>dymisję</trd>
+        </trdgrp>
+    </drv>"""
+    drv = Drv(parser(xml), {'radix': 'telefon'})
+    trds = drv.translations()
+    assert trds == {
+        'poŝtelefono': {
+            'es': ['teléfono móvil', 'teléfono celular'],
+            'pl': ['dać dymisję'],
+        }
+    }
