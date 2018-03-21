@@ -1,6 +1,6 @@
 version: '2'
 services:
   app:
-    build: revo
+    build: .
     volumes:
-      - ./revo:/src
+      - ./:/src

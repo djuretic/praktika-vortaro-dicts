@@ -1,7 +1,7 @@
 import click
 import xml.etree.ElementTree as ET
 from lxml import etree
-from utils import add_hats, letter_enumerate
+from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
 
 

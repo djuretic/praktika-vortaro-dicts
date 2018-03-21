@@ -2,8 +2,10 @@
 *.db
 *.xml
 *.pyc
+*.egg-info
 __pycache__
+.cache
 fabfile.py
 /*.sh
-revo/*/
-!revo/parser
+eo_dicts/*/
+!eo_dicts/parser
