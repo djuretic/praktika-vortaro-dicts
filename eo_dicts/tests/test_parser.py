@@ -1,4 +1,4 @@
-from .parser.revo import Art, Snc, Dif, Drv, Subart
+from ..parser.revo import Art, Snc, Dif, Drv, Subart
 from lxml import etree
 import pytest
 

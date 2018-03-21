@@ -9,3 +9,4 @@ fabfile.py
 /*.sh
 eo_dicts/*/
 !eo_dicts/parser
+!eo_dicts/tests

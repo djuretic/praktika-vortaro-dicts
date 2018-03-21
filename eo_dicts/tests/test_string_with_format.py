@@ -1,4 +1,4 @@
-from .parser.string_with_format import StringWithFormat
+from ..parser.string_with_format import StringWithFormat
 
 
 def test_init():
