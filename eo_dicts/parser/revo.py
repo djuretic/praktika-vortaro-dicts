@@ -1,3 +1,4 @@
+import os.path
 import click
 import xml.etree.ElementTree as ET
 from lxml import etree
@@ -493,12 +494,13 @@ class Mll(TextNode):
 def entities_dict():
     entities = {}
 
-    with open('dtd/vokosgn.dtd', 'rb') as f:
+    base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'revo', 'dtd')
+    with open(os.path.join(base_dir, 'vokosgn.dtd'), 'rb') as f:
         dtd = etree.DTD(f)
         for entity in dtd.iterentities():
             entities[entity.name] = entity.content
 
-    with open('dtd/vokomll.dtd', 'rb') as f:
+    with open(os.path.join(base_dir, 'vokomll.dtd'), 'rb') as f:
         dtd = etree.DTD(f)
         for entity in dtd.iterentities():
             entities[entity.name] = entity.content

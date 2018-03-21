@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import os
 
 MAPPING = {
     'C': 'Ĉ',
@@ -34,7 +35,9 @@ def add_hats(word):
     return res
 
 def get_languages():
-    tree = ET.parse("./cfg/lingvoj.xml")
+    base_dir = os.path.dirname(__file__)
+    xml_path = os.path.join(base_dir, '..', 'revo', 'cfg', 'lingvoj.xml')
+    tree = ET.parse(xml_path)
     langs = tree.findall('lingvo')
     alphabet = 'abcĉdefgĝhĥijĵklmnoprsŝtuŭvz/-'
     # normal sort puts ĉ, ĝ,... at the end

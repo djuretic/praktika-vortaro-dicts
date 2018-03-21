@@ -7,6 +7,4 @@ __pycache__
 .cache
 fabfile.py
 /*.sh
-eo_dicts/*/
-!eo_dicts/parser
-!eo_dicts/tests
+/revo

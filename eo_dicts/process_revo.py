@@ -6,8 +6,8 @@ import itertools
 from lxml import etree
 import click
 
-from utils import add_hats, list_languages, get_languages
-import parser.revo
+from .utils import add_hats, list_languages, get_languages
+from .parser import revo
 
 
 def insert_translations(trads, cursor):
@@ -29,8 +29,12 @@ def insert_translations(trads, cursor):
 
 
 def create_db():
-    db_filename = 'vortaro.db'
-    os.remove(db_filename)
+    base_dir = os.path.dirname(__file__)
+    db_filename = os.path.join(base_dir, 'vortaro.db')
+    try:
+        os.remove(db_filename)
+    except:
+        pass
     conn = sqlite3.connect(db_filename)
     c = conn.cursor()
     # position: relative order inside the article
@@ -83,7 +87,7 @@ def create_langs_tables(cursor, langs):
 def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
     art = None
     try:
-        art = parser.revo.parse_article(filename)
+        art = revo.parse_article(filename)
     except:
         print('Error parsing %s' % filename)
         raise
@@ -167,7 +171,9 @@ def main(word, xml_file, limit, verbose, dry_run, show_languages):
         if xml_file:
             files = [xml_file]
         else:
-            files = glob.glob('./xml/*.xml')
+            base_dir = os.path.dirname(__file__)
+            path = os.path.join(base_dir, '..', 'revo', 'xml', '*.xml')
+            files = glob.glob(path)
         files.sort()
 
         num_article = 1
