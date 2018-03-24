@@ -199,6 +199,7 @@ class Subart(TextNode):
         self.kap = ''
 
     def derivations(self):
+        # Note that this method sometimes will return the subart node
         drvs = list(self.get(Drv))
         if len(drvs) == 1:
             self.kap = drvs[0].kap

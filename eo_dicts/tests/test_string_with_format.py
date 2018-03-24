@@ -21,7 +21,7 @@ def test_add_format():
     assert string.format == {'italic': [(0, 7)]}
     string.add_italic(' mondo!')
     assert string.string == 'Saluton mondo!'
-    assert string.format == {'italic': [(0, 7), (7, 14)]}
+    assert string.format == {'italic': [(0, 14)]}
 
 
 def test_add_format_final():
@@ -40,7 +40,7 @@ def test_merge():
     string2.add_italic('u')
     string1.add(string2)
     assert string1.string == 'Nu'
-    assert string1.format == {'italic': [(0, 1), (1, 2)]}
+    assert string1.format == {'italic': [(0, 2)]}
 
 
 def test_prepend():

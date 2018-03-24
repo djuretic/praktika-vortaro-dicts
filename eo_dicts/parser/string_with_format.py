@@ -29,15 +29,26 @@ class StringWithFormat:
 
         if isinstance(other, StringWithFormat):
             assert format_type is None
+            # first string length
             n = len(self.string)
             self.add(other.string, keep_whitespace=keep_whitespace)
             for fmt, fmt_list in other.format.items():
                 if fmt not in self.format:
                     self.format[fmt] = []
+
+                if self.format[fmt] and self.format[fmt][-1][-1] == n and \
+                    fmt_list and fmt_list[0][0] == 0:
+                    # merge two formats in one
+                    self.format[fmt][-1] = (self.format[fmt][-1][0], n + fmt_list[0][1])
+                    fmt_list = fmt_list[1:]
                 self.format[fmt] += [tuple(map(lambda x: x+n, indexes)) for indexes in fmt_list]
         else:
             if format_type:
-                self.format[format_type.value].append((len(self.string), len(self.string) + len(other)))
+                last_format = self.format[format_type.value]
+                if last_format and last_format[-1][-1] == len(self.string):
+                    last_format[-1] = (last_format[-1][0], len(self.string) + len(other))
+                else:
+                    self.format[format_type.value].append((len(self.string), len(self.string) + len(other)))
             self.string += other
         return self
 
