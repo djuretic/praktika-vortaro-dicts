@@ -28,9 +28,9 @@ def insert_translations(trads, cursor):
         )
 
 
-def create_db():
+def create_db(output_db):
     base_dir = os.path.dirname(__file__)
-    db_filename = os.path.join(base_dir, 'vortaro.db')
+    db_filename = os.path.join(base_dir, output_db)
     try:
         os.remove(db_filename)
     except:
@@ -84,7 +84,7 @@ def create_langs_tables(cursor, langs):
         """, (lang, lang_names[lang][1]))
 
 
-def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
+def parse_article(filename, num_article, cursor, verbose=False):
     art = None
     try:
         art = revo.parse_article(filename)
@@ -94,17 +94,26 @@ def parse_article(filename, num_article, cursor, verbose=False, dry_run=False):
 
     found_words = []
     entries = []
-    for pos, drv in enumerate(art.derivations(), 1):
+    has_subart = False
+    drvs = list(art.derivations())
+    for pos, drv in enumerate(drvs, 1):
+        if isinstance(drv, revo.Subart):
+            has_subart = True
+
+        if pos == len(drvs) and has_subart and not drv.kap:
+            # first subart contains the whole article,
+            # so this snc will not be needed
+            continue
+
         main_word_txt = drv.main_word()
         found_words.append(main_word_txt)
         row_id = None
-        if not dry_run:
-            content = drv.to_text()
-            assert 'StringWithFormat' not in content.string
-            entries.append(
-                dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
-                definition=content.string, format=content.encode_format(),
-                trads=drv.translations(), position=pos))
+        content = drv.to_text()
+        assert 'StringWithFormat' not in content.string
+        entries.append(
+            dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
+            definition=content.string, format=content.encode_format(),
+            trads=drv.translations(), position=pos))
 
         if verbose:
             print(filename, drv.mrk, row_id)
@@ -153,16 +162,17 @@ def insert_entries(entries, cursor):
 @click.command()
 @click.option('--word')
 @click.option('--xml-file')
+@click.option('--output-db', default='vortaro.db')
 @click.option('--limit', type=int)
 @click.option('--verbose', is_flag=True)
 @click.option('--dry-run', is_flag=True)
 @click.option('--show-languages', is_flag=True)
-def main(word, xml_file, limit, verbose, dry_run, show_languages):
+def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages):
     if show_languages:
         list_languages()
         return
 
-    conn = create_db()
+    conn = create_db(output_db)
     cursor = conn.cursor()
 
     entries = []
@@ -181,17 +191,19 @@ def main(word, xml_file, limit, verbose, dry_run, show_languages):
             if word and word not in filename:
                 continue
             parsed_entries = parse_article(
-                filename, num_article, cursor, verbose, dry_run)
+                filename, num_article, cursor, verbose)
             entries += parsed_entries
             num_article += 1
 
             if limit and num_article >= limit:
                 break
 
-        insert_entries(entries, cursor)
-        create_index(cursor)
+        if not dry_run:
+            insert_entries(entries, cursor)
+            create_index(cursor)
     finally:
-        conn.commit()
+        if not dry_run:
+            conn.commit()
         cursor.close()
         conn.close()
 

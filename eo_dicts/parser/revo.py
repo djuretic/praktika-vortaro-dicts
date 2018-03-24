@@ -196,13 +196,22 @@ class Subart(TextNode):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         self.mrk = ''
+        self.kap = ''
 
     def derivations(self):
-        for drv in self.get(Drv):
-            yield drv
-        # al.xml, last <subart>
-        # TODO multiple snc, add numbering and line breaks
-        if self.get(Snc):
+        drvs = list(self.get(Drv))
+        if len(drvs) == 1:
+            self.kap = drvs[0].kap
+            self.mrk = drvs[0].mrk
+            yield self
+        else:
+            for drv in drvs:
+                if not self.kap:
+                    self.kap = drv.kap
+                    self.mrk = drv.mrk
+                yield drv
+        # al.xml, last <subart> has <snc> as a direct child
+        if not drvs and list(self.get(Snc)):
             yield self
 
 # TODO process variants (ex: elreviĝo, disreviĝo)
