@@ -4,6 +4,7 @@ from enum import Enum
 class Format(Enum):
     ITALIC = 'italic'
     BOLD = 'bold'
+    COLOR_GRAY = 'gray'
 
 
 class StringWithFormat:
@@ -61,9 +62,13 @@ class StringWithFormat:
     def apply_format(self, format_type):
         if not format_type:
             return self
-        if format_type and format_type.value not in self.format:
-            self.format[format_type.value] = []
-        self.format[format_type.value].append((0, len(self.string)))
+        if isinstance(format_type, (list, tuple)):
+            for format_t in format_type:
+                self.apply_format(format_t)
+        else:
+            if format_type and format_type.value not in self.format:
+                self.format[format_type.value] = []
+            self.format[format_type.value].append((0, len(self.string)))
         return self
 
     def __add__(self, other):

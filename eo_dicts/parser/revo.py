@@ -116,7 +116,7 @@ class Node:
 
 
 class TextNode(Node):
-    # Format enum
+    # Format enum, can also be a list
     base_format = None
 
     def to_text(self):
@@ -417,7 +417,7 @@ class Sncref(TextNode):
 
 
 class Ekz(TextNode):
-    base_format = Format.ITALIC
+    base_format = (Format.ITALIC, Format.COLOR_GRAY)
 
 
 class Tld(Node):
