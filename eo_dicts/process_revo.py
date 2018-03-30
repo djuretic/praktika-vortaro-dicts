@@ -52,12 +52,13 @@ def create_db(output_db):
 
     return conn
 
-def create_langs_tables(cursor, langs):
+def create_langs_tables(cursor, entries_per_lang):
     cursor.execute("""
         CREATE TABLE languages (
             id integer primary key,
             code text,
-            name text
+            name text,
+            num_entries integer
         )
     """)
 
@@ -66,7 +67,7 @@ def create_langs_tables(cursor, langs):
         for order, lang_def in enumerate(get_languages())}
     # Normal sort won't consider ĉ, ŝ, ...,
     # get_languages() gives the correct order
-    langs = sorted(langs, key=lambda x: lang_names[x][0])
+    langs = sorted(entries_per_lang.keys(), key=lambda x: lang_names[x][0])
 
     for lang in langs:
         cursor.execute("""
@@ -79,9 +80,9 @@ def create_langs_tables(cursor, langs):
         """.format(lang=lang))
 
         cursor.execute("""
-            INSERT INTO languages (code, name)
-            VALUES (?, ?)
-        """, (lang, lang_names[lang][1]))
+            INSERT INTO languages (code, name, num_entries)
+            VALUES (?, ?, ?)
+        """, (lang, lang_names[lang][1], entries_per_lang[lang]))
 
 
 def parse_article(filename, num_article, cursor, verbose=False):
@@ -146,15 +147,15 @@ def insert_entries(entries, cursor):
                     translations.append(dict(row_id=row_id, word=word, lng=lng, data=trans_data))
 
     translations = sorted(translations, key= lambda x: x['lng'])
-    shown_langs = []
+    entries_per_lang = {}
     for lng, g in itertools.groupby(translations, key=lambda x: x['lng']):
         count = len(list(g))
         if count >= 100:
             print(lng, count)
-            shown_langs.append(lng)
+            entries_per_lang[lng] = count
 
-    create_langs_tables(cursor, shown_langs)
-    translations = [t for t in translations if t['lng'] in shown_langs]
+    create_langs_tables(cursor, entries_per_lang)
+    translations = [t for t in translations if t['lng'] in entries_per_lang]
     insert_translations(translations, cursor)
 
 
