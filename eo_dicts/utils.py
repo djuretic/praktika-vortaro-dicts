@@ -44,6 +44,12 @@ def get_languages():
     langs = sorted(langs, key=lambda x: [alphabet.index(c) for c in x.text])
     return [{'code': lang.get('kodo'), 'name': lang.text } for lang in langs]
 
+def get_disciplines():
+    base_dir = os.path.dirname(__file__)
+    xml_path = os.path.join(base_dir, '..', 'revo', 'cfg', 'fakoj.xml')
+    tree = ET.parse(xml_path)
+    return {node.get('kodo'): node.text for node in tree.findall('fako')}
+
 def list_languages():
     langs = get_languages()
     for n, lang in enumerate(langs, 1):

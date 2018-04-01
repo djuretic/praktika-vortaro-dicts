@@ -6,7 +6,7 @@ import itertools
 from lxml import etree
 import click
 
-from .utils import add_hats, list_languages, get_languages
+from .utils import add_hats, list_languages, get_languages, get_disciplines
 from .parser import revo
 
 
@@ -83,6 +83,20 @@ def create_langs_tables(cursor, entries_per_lang):
             INSERT INTO languages (code, name, num_entries)
             VALUES (?, ?, ?)
         """, (lang, lang_names[lang][1], entries_per_lang[lang]))
+
+def create_disciplines_tables(cursor):
+    cursor.execute("""
+        CREATE TABLE disciplines (
+            id integer primary key,
+            code text,
+            name text
+        )
+    """)
+
+    for code, discipline in get_disciplines().items():
+        cursor.execute(
+            "INSERT INTO disciplines (code, name) VALUES (?, ?)",
+            (code, discipline))
 
 
 def parse_article(filename, num_article, cursor, verbose=False):
@@ -175,6 +189,9 @@ def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages):
 
     conn = create_db(output_db)
     cursor = conn.cursor()
+
+    if not dry_run:
+        create_disciplines_tables(cursor)
 
     entries = []
     try:
