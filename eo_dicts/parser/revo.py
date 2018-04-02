@@ -343,7 +343,9 @@ class Uzo(TextNode):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
         if node.get('tip') == 'fak':
-            self.base_format = Format.FAKO
+            self.base_format = Format.UZO_FAKO
+        elif node.get('tip') == 'stl':
+            self.base_format = Format.UZO_STILO
 
     def to_text(self):
         return super().to_text() + ' '

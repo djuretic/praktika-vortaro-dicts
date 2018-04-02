@@ -5,7 +5,8 @@ class Format(Enum):
     ITALIC = 'italic'
     BOLD = 'bold'
     COLOR_GRAY = 'gray'
-    FAKO = 'fako'
+    UZO_FAKO = 'fako'
+    UZO_STILO = 'stilo'
 
 
 class StringWithFormat:
