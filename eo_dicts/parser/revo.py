@@ -424,7 +424,7 @@ class Sncref(TextNode):
 
 
 class Ekz(TextNode):
-    base_format = (Format.ITALIC, Format.COLOR_GRAY)
+    base_format = (Format.EKZ)
 
 
 class Tld(Node):

@@ -4,7 +4,7 @@ from enum import Enum
 class Format(Enum):
     ITALIC = 'italic'
     BOLD = 'bold'
-    COLOR_GRAY = 'gray'
+    EKZ = 'ekz'
     UZO_FAKO = 'fako'
     UZO_STILO = 'stilo'
 

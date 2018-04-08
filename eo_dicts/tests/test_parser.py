@@ -41,7 +41,7 @@ def test_article_no_drv(parser):
     assert derivs[0].__class__ is Subart
     parsed = derivs[0].to_text()
     assert parsed.string == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
-    assert parsed.format == {'italic': [(26, 57)], 'gray': [(26, 57)]}
+    assert parsed.format == {'ekz': [(26, 57)]}
 
 def test_drv_multiple_kap(parser):
     xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""
@@ -114,7 +114,9 @@ def test_snc_ignore_fnt(parser):
 
 def test_snc_ignore_trd(parser):
     xml = '<snc mrk="-"><dif>Difino <ekz><ind>Frazo</ind>.<trd lng="hu">Trd</trd></ekz></dif></snc>'
-    assert Snc(parser(xml)).to_text().string == 'Difino Frazo.'
+    tag = Snc(parser(xml)).to_text()
+    assert tag.string == 'Difino Frazo.'
+    assert tag.format == {'ekz': [(7, 13)]}
 
 def test_snc_replace_tld(parser):
     xml = """<snc mrk="abat.0o">
