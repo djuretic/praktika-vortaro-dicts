@@ -51,6 +51,10 @@ def test_drv_kap(parser):
     xml = '<drv mrk="a1.0.volvita"><kap><tld/> volvita</kap></drv>'
     assert Drv(parser(xml), {'radix': 'a'}).kap == 'a volvita'
 
+def test_drv_main_word_multiple(parser):
+    xml = '<drv mrk="abort.0ajxo"><kap><tld/>aĵo, <var><kap><tld/>ulo</kap></var></kap></drv>'
+    assert Drv(parser(xml), {'radix': 'abort'}).main_word() == 'abortaĵo, abortulo'
+
 def test_drv_whitespace_after_gra_and_ref(parser):
     xml = """<drv mrk="abol.0i">
         <kap><tld/>i</kap>

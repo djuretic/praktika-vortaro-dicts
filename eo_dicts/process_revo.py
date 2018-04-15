@@ -22,7 +22,7 @@ def insert_translations(trads, cursor):
     for translation in all_trans:
         cursor.execute(
             """INSERT INTO translations_{code}
-            (word_id, word, translation)
+            (definition_id, word, translation)
             VALUES (?,?,?)""".format(code=translation['lng']),
             (translation['row_id'], translation['word'], translation['translation'])
         )
@@ -41,8 +41,15 @@ def create_db(output_db):
     c.execute("""
         CREATE TABLE words (
             id integer primary key,
-            article_id integer,
             word text,
+            definition_id integer
+        )
+    """)
+    c.execute("""
+        CREATE TABLE definitions (
+            id integer primary key,
+            article_id integer,
+            words text,
             mark text,
             position integer,
             definition text,
@@ -73,7 +80,7 @@ def create_langs_tables(cursor, entries_per_lang):
         cursor.execute("""
         CREATE TABLE translations_{lang} (
             id integer primary key,
-            word_id integer,
+            definition_id integer,
             word text,
             translation text
         )
@@ -125,10 +132,17 @@ def parse_article(filename, num_article, cursor, verbose=False):
         row_id = None
         content = drv.to_text()
         assert 'StringWithFormat' not in content.string
-        entries.append(
-            dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
+
+        # definition_id will be used to check whether the definition is already in the database
+        definition = dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
             definition=content.string, format=content.encode_format(),
-            trads=drv.translations(), position=pos))
+            trads=drv.translations(), position=pos, definition_id=None)
+        # note that before inserting the entries will be sorted by 'word'
+        for word in main_word_txt.split(', '):
+            word = word.strip()
+            # "definition" dict is shared between entries in this loop
+            entries.append(
+                dict(article_id=num_article, word=word, definition=definition))
 
         if verbose:
             print(filename, drv.mrk, row_id)
@@ -140,7 +154,7 @@ def parse_article(filename, num_article, cursor, verbose=False):
 
 def create_index(cursor):
     cursor.execute("CREATE INDEX index_word_words ON words (word)")
-    # cursor.execute("CREATE INDEX index_translations ON translations (lng, translation)")
+    cursor.execute("CREATE INDEX index_definition_id_words ON words (definition_id)")
 
 
 def insert_entries(entries, cursor):
@@ -148,17 +162,27 @@ def insert_entries(entries, cursor):
     translations = []
     for entry in entries:
         print(entry['word'])
-        tokens = [entry[x] for x in ('article_id', 'position', 'word', 'mark', 'definition', 'format')]
-        cursor.execute("""INSERT into words (
-            article_id, position, word, mark, definition, format)
-            values (?, ?, ?, ?, ?, ?)""", tokens)
-        row_id = cursor.lastrowid
 
-        trads = entry['trads']
+        if not entry['definition']['definition_id']:
+            definition = entry['definition']
+            cursor.execute("""INSERT INTO definitions (
+                words, mark, position, definition, format)
+                values (?, ?, ?, ?, ?)""", (
+                    definition['word'], definition['mark'], definition['position'],
+                    definition['definition'], definition['format']))
+            entry['definition']['definition_id'] = cursor.lastrowid
+        def_id = entry['definition']['definition_id']
+
+        cursor.execute(
+            "INSERT into words (word, definition_id) values (?, ?)",
+            [entry['word'], def_id]
+        )
+
+        trads = entry['definition']['trads']
         if trads:
             for word, more_trads in trads.items():
                 for lng, trans_data in more_trads.items():
-                    translations.append(dict(row_id=row_id, word=word, lng=lng, data=trans_data))
+                    translations.append(dict(row_id=def_id, word=word, lng=lng, data=trans_data))
 
     translations = sorted(translations, key= lambda x: x['lng'])
     entries_per_lang = {}

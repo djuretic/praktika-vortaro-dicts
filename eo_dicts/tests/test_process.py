@@ -38,10 +38,10 @@ def test_process_subart(runner):
 
     conn = sqlite3.connect('eo_dicts/' + TEST_DB)
     cursor = conn.cursor()
-    res = cursor.execute("SELECT word, mark, article_id, position from words")
+    res = cursor.execute("SELECT words, mark, position from definitions")
     assert list(res) == [
-        ('ĝ', 'gx.0.konsonanto', 1, 1),
-        ('ĝo', 'gx.0.nomo', 1, 2),
+        ('ĝ', 'gx.0.konsonanto', 1),
+        ('ĝo', 'gx.0.nomo', 2),
     ]
 
 def test_process_subart_2(runner):
@@ -50,11 +50,11 @@ def test_process_subart_2(runner):
 
     conn = sqlite3.connect('eo_dicts/' + TEST_DB)
     cursor = conn.cursor()
-    res = cursor.execute("SELECT word, article_id from words")
+    res = cursor.execute("SELECT word, definition_id from words")
     assert list(res) == [
         ('al', 1),
-        ('alaĵo', 1),
-        ('aligi', 1),
-        ('aliĝi', 1),
-        ('aliĝilo', 1),
+        ('alaĵo', 2),
+        ('aligi', 3),
+        ('aliĝi', 4),
+        ('aliĝilo', 5),
     ]
