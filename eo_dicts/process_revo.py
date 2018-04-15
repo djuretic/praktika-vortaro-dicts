@@ -166,9 +166,10 @@ def insert_entries(entries, cursor):
         if not entry['definition']['definition_id']:
             definition = entry['definition']
             cursor.execute("""INSERT INTO definitions (
-                words, mark, position, definition, format)
-                values (?, ?, ?, ?, ?)""", (
-                    definition['word'], definition['mark'], definition['position'],
+                article_id, words, mark, position, definition, format)
+                values (?, ?, ?, ?, ?, ?)""", (
+                    definition['article_id'], definition['word'],
+                    definition['mark'], definition['position'],
                     definition['definition'], definition['format']))
             entry['definition']['definition_id'] = cursor.lastrowid
         def_id = entry['definition']['definition_id']
