@@ -8,5 +8,5 @@ __pycache__
 fabfile.py
 docker-compose.yml
 Dockerfile
-/*.sh
+xsl.sh
 /revo
