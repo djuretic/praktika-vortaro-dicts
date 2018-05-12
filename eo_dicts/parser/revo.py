@@ -398,13 +398,25 @@ class Trdgrp(Node):
 
 
 class Ref(TextNode):
+    @staticmethod
+    def add_arrow(tip, text):
+        if not tip:
+            return text
+        symbol = '→'
+        if tip == 'dif':
+            symbol = '='
+        content = StringWithFormat(symbol + ' ')
+        content += text
+        return content
+
     def __init__(self,node, extra_info=None):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
 
     def to_text(self):
-        return super().to_text()
-    #     # TODO add link
+        if isinstance(self.parent, (Dif, Rim, Ekz, Klr)):
+            return super().to_text()
+        return Ref.add_arrow(self.tip, super().to_text())
     #     symbol = "→"
     #     if self.tip == 'malprt':
     #         symbol = "↗"
@@ -416,7 +428,14 @@ class Ref(TextNode):
 
 
 class Refgrp(TextNode):
-    pass
+    def __init__(self,node, extra_info=None):
+        super().__init__(node, extra_info)
+        self.tip = node.get('tip')
+
+    def to_text(self):
+        if isinstance(self.parent, (Dif, Rim, Ekz, Klr)):
+            return super().to_text()
+        return Ref.add_arrow(self.tip, super().to_text())
 
 
 class Sncref(TextNode):

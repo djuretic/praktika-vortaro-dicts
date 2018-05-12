@@ -1,4 +1,4 @@
-from ..parser.revo import Art, Snc, Dif, Drv, Subart
+from ..parser.revo import Art, Snc, Dif, Drv, Subart, Refgrp
 from lxml import etree
 import pytest
 
@@ -67,7 +67,7 @@ def test_drv_whitespace_after_gra_and_ref(parser):
             </ekz>
         </snc>
     </drv>"""
-    assert Drv(parser(xml), {'radix': 'abol'}).to_text().string == '(tr) JUR abolicii sklaveco estis abolita en Brazilo en 1888. '
+    assert Drv(parser(xml), {'radix': 'abol'}).to_text().string == '(tr) JUR = abolicii sklaveco estis abolita en Brazilo en 1888. '
 
 def test_subdrv(parser):
     xml = """<drv mrk="ad.0">
@@ -240,3 +240,9 @@ def test_trd_preserves_whitespace(parser):
             'pl': ['dać dymisję'],
         }
     }
+
+def test_refgrp_arrow(parser):
+    xml = """<refgrp tip="sin">
+        <ref cel="plagx.0o">plaĝo</ref>
+    </refgrp>"""
+    assert Refgrp(parser(xml)).to_text().string == '→ plaĝo'
