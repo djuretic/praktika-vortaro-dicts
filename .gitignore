@@ -9,4 +9,3 @@ fabfile.py
 docker-compose.yml
 Dockerfile
 xsl.sh
-/revo

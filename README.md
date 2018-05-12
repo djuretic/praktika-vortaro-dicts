@@ -1,4 +1,4 @@
-# Dictionary files for Vortaro
+# Dictionary files for Praktika Vortaro
 
 ## Generating the database
 

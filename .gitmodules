@@ -1,0 +1,3 @@
+[submodule "revo"]
+	path = revo
+	url = git@github.com:djuretic/praktika-vortaro-revo.git
