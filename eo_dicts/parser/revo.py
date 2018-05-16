@@ -453,11 +453,17 @@ class Tld(Node):
         if extra_info:
             self.radix = extra_info.get('radix')
         self.radix = self.radix.strip()
+        self.parent = extra_info.get('parent')
 
     def to_text(self):
+        content = None
         if self.lit and self.radix:
-            return self.lit + self.radix[1:]
-        return self.radix or '-----'
+            content = StringWithFormat(self.lit + self.radix[1:])
+        else:
+            content = StringWithFormat(self.radix or '-----')
+        if isinstance(self.parent, Ekz):
+            content = content.apply_format(Format.TLD)
+        return content
 
 # found in amik.xml
 class Klr(TextNode):

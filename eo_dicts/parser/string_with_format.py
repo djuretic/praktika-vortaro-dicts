@@ -5,6 +5,7 @@ class Format(Enum):
     ITALIC = 'italic'
     BOLD = 'bold'
     EKZ = 'ekz'
+    TLD = 'tld'
     UZO_FAKO = 'fako'
     UZO_STILO = 'stilo'
 
