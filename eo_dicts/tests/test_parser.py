@@ -213,7 +213,7 @@ def test_trd_inside_ekz(parser):
     assert len(derivs) == 1
     trds = derivs[0].translations()
     assert trds == {
-        'abstini': {'en': ['abstain']},
+        'abstini': {'en': {None: ['abstain']}},
         # 'abstinulo': {
         #     'ca': ['abstinent (subst.)'],
         #     'hu': ['absztinens', 'önmegtartóztatás'],
@@ -236,8 +236,30 @@ def test_trd_preserves_whitespace(parser):
     trds = drv.translations()
     assert trds == {
         'poŝtelefono': {
-            'es': ['teléfono móvil', 'teléfono celular'],
-            'pl': ['dać dymisję'],
+            'es': {None: ['teléfono móvil', 'teléfono celular']},
+            'pl': {None: ['dać dymisję']},
+        }
+    }
+
+def test_trd_inside_snc(parser):
+    xml = """<drv mrk="brik.0o">
+        <kap><ofc>*</ofc><tld/>o</kap>
+        <snc mrk="brik.0o.bakita">
+            <trd lng="en">brick</trd>
+        </snc>
+        <snc mrk="brik.0o.FIG_elemento"></snc>
+        <snc mrk="brik.0o.formo">
+            <trd lng="en">block</trd>
+        </snc>
+    </drv>"""
+    drv = Drv(parser(xml), {'radix': 'brik'})
+    trds = drv.translations()
+    assert trds == {
+        'briko': {
+            'en': {
+                1: ['brick'],
+                3: ['block']
+            }
         }
     }
 

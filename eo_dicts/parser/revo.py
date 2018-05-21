@@ -103,15 +103,32 @@ class Node:
     def translations(self):
         trds = {}
         for tag in self.get_recursive(Trd, Trdgrp):
-            if isinstance(tag.parent, Drv):
-                main_word = tag.parent.main_word()
-                if main_word not in trds:
-                    trds[main_word] = {}
+            if not isinstance(tag.parent, (Drv, Snc)):
+                continue
 
-                lng, texts = tag.parse_trd()
-                if isinstance(texts, str):
-                    texts = [texts]
-                trds[main_word][lng] = texts
+            # N° of snc inside the Drv
+            snc_index = None
+            if isinstance(tag.parent, Snc):
+                if not isinstance(tag.parent.parent, Drv):
+                    # TODO check if we are missing something
+                    # example: -ad (ad.xml and subdrv)
+                    continue
+                drv = tag.parent.parent
+                main_word = drv.main_word()
+                snc_index = [t for t in drv.children if isinstance(t, Snc)].index(tag.parent) + 1
+            else:
+                main_word = tag.parent.main_word()
+            if main_word not in trds:
+                trds[main_word] = {}
+
+            lng, texts = tag.parse_trd()
+            if isinstance(texts, str):
+                texts = [texts]
+
+            if lng not in trds[main_word]:
+                trds[main_word][lng] = {}
+            trds[main_word][lng][snc_index] = texts
+
         return trds
 
 

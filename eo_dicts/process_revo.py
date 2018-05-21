@@ -14,17 +14,18 @@ def insert_translations(trads, cursor):
     # flatten
     all_trans = []
     for translation in trads:
-        for word in translation['data']:
-            all_trans.append(dict(translation=word, **translation))
+        for snc_index, words in translation['data'].items():
+            for word in words:
+                all_trans.append(dict(translation=word, snc_index=snc_index, **translation))
 
-    all_trans.sort(key=lambda x: (x['lng'], x['translation']))
+    all_trans.sort(key=lambda x: (x['lng'], x['translation'], x['snc_index'] is None, x['snc_index']))
 
     for translation in all_trans:
         cursor.execute(
             """INSERT INTO translations_{code}
-            (definition_id, word, translation)
-            VALUES (?,?,?)""".format(code=translation['lng']),
-            (translation['row_id'], translation['word'], translation['translation'])
+            (definition_id, snc_index, word, translation)
+            VALUES (?,?,?,?)""".format(code=translation['lng']),
+            (translation['row_id'], translation['snc_index'], translation['word'], translation['translation'])
         )
 
 
@@ -81,6 +82,7 @@ def create_langs_tables(cursor, entries_per_lang):
         CREATE TABLE translations_{lang} (
             id integer primary key,
             definition_id integer,
+            snc_index integer,
             word text,
             translation text
         )
@@ -157,7 +159,7 @@ def create_index(cursor):
     cursor.execute("CREATE INDEX index_definition_id_words ON words (definition_id)")
 
 
-def insert_entries(entries, cursor):
+def insert_entries(entries, cursor, min_entries_to_include_lang):
     entries = sorted(entries, key=lambda x: x['word'].lower())
     translations = []
     for entry in entries:
@@ -189,7 +191,7 @@ def insert_entries(entries, cursor):
     entries_per_lang = {}
     for lng, g in itertools.groupby(translations, key=lambda x: x['lng']):
         count = len(list(g))
-        if count >= 100:
+        if count >= min_entries_to_include_lang:
             print(lng, count)
             entries_per_lang[lng] = count
 
@@ -207,7 +209,8 @@ def insert_entries(entries, cursor):
 @click.option('--verbose', is_flag=True)
 @click.option('--dry-run', is_flag=True)
 @click.option('--show-languages', is_flag=True)
-def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages):
+@click.option('--min-entries-to-include-lang', type=int, default=100)
+def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages, min_entries_to_include_lang):
     if show_languages:
         list_languages()
         return
@@ -242,7 +245,7 @@ def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages):
                 break
 
         if not dry_run:
-            insert_entries(entries, cursor)
+            insert_entries(entries, cursor, min_entries_to_include_lang)
             create_index(cursor)
     finally:
         if not dry_run:
