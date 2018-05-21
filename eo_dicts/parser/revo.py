@@ -115,7 +115,11 @@ class Node:
                     continue
                 drv = tag.parent.parent
                 main_word = drv.main_word()
-                snc_index = [t for t in drv.children if isinstance(t, Snc)].index(tag.parent) + 1
+
+                sncs = [t for t in drv.children if isinstance(t, Snc)]
+                # If there is only one Snc we don't need to specify a snc_index
+                if len(sncs) > 1:
+                    snc_index = sncs.index(tag.parent) + 1
             else:
                 main_word = tag.parent.main_word()
             if main_word not in trds:

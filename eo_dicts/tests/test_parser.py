@@ -263,6 +263,16 @@ def test_trd_inside_snc(parser):
         }
     }
 
+def test_trd_inside_only_snc(parser):
+    xml = """<drv mrk="cxili.CX0o">
+        <kap><tld/>o</kap>
+        <snc><trd lng="da">Chile</trd></snc>
+    </drv>"""
+    drv = Drv(parser(xml), {'radix': 'cxili'})
+    assert drv.translations() == {
+        'ĉilio': {'da': {None: ['Chile']}}
+    }
+
 def test_refgrp_arrow(parser):
     xml = """<refgrp tip="sin">
         <ref cel="plagx.0o">plaĝo</ref>
