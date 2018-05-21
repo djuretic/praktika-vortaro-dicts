@@ -7,6 +7,7 @@ import os
 def search(word):
     db_filename = os.path.join(os.path.dirname(__file__), 'vortaro.db')
     conn = sqlite3.connect(db_filename)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     try:
         for row in cursor.execute("""
@@ -15,9 +16,8 @@ def search(word):
             LEFT JOIN definitions d ON (w.definition_id = d.id)
             WHERE word = ?
             """, (word,)):
-            for field in row:
-                print(field)
-                print("---")
+            for field, value in dict(row).items():
+                print("%s: %s" % (field, repr(value)))
     finally:
         cursor.close()
         conn.close()
