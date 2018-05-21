@@ -9,9 +9,15 @@ def search(word):
     conn = sqlite3.connect(db_filename)
     cursor = conn.cursor()
     try:
-        for row in cursor.execute("SELECT * FROM words WHERE word = ?", (word,)):
+        for row in cursor.execute("""
+            SELECT *
+            FROM words w
+            LEFT JOIN definitions d ON (w.definition_id = d.id)
+            WHERE word = ?
+            """, (word,)):
             for field in row:
                 print(field)
+                print("---")
     finally:
         cursor.close()
         conn.close()
