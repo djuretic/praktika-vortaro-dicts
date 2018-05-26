@@ -236,7 +236,6 @@ class Subart(TextNode):
         if not drvs and list(self.get(Snc)):
             yield self
 
-# TODO process variants (ex: elreviĝo, disreviĝo)
 class Drv(Node):
     def __init__(self, node, extra_info=None):
         self.mrk = node.get('mrk')
@@ -363,13 +362,29 @@ class Subsnc(TextNode):
 class Uzo(TextNode):
     def __init__(self, node, extra_info=None):
         super().__init__(node, extra_info)
-        if node.get('tip') == 'fak':
+        self.tip = node.get('tip')
+        if self.tip == 'fak':
             self.base_format = Format.UZO_FAKO
-        elif node.get('tip') == 'stl':
-            self.base_format = Format.UZO_STILO
 
     def to_text(self):
-        return super().to_text() + ' '
+        text = super().to_text()
+        if self.tip == 'stl':
+            mapping = {
+                "FRAZ": "(frazaĵo)",
+                "FIG": "(figure)",
+                "VULG": "(vulgare)",
+                "RAR": "(malofte)",
+                "POE": "(poezie)",
+                "ARK": "(arkaismo)",
+                "EVI": "(evitinde)",
+                "KOMUNE": "(komune)",
+                "NEO": "(neologismo)"
+            }
+            if isinstance(text, str):
+                text = mapping.get(text, text)
+            else:
+                text = mapping.get(text.string, text.string)
+        return text + ' '
 
 
 class Dif(TextNode):

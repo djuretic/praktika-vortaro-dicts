@@ -7,7 +7,6 @@ class Format(Enum):
     EKZ = 'ekz'
     TLD = 'tld'
     UZO_FAKO = 'fako'
-    UZO_STILO = 'stilo'
 
 
 class StringWithFormat:
