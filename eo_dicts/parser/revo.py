@@ -568,6 +568,10 @@ class Mll(TextNode):
     pass
 
 
+class Nom(TextNode):
+    pass
+
+
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict():
     entities = {}

@@ -38,7 +38,6 @@ def create_db(output_db):
         pass
     conn = sqlite3.connect(db_filename)
     c = conn.cursor()
-    # position: relative order inside the article
     c.execute("""
         CREATE TABLE words (
             id integer primary key,
@@ -46,6 +45,7 @@ def create_db(output_db):
             definition_id integer
         )
     """)
+    # position: relative order inside the article
     c.execute("""
         CREATE TABLE definitions (
             id integer primary key,
