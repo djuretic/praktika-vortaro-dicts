@@ -140,11 +140,17 @@ def parse_article(filename, num_article, cursor, verbose=False):
             definition=content.string, format=content.encode_format(),
             trads=drv.translations(), position=pos, definition_id=None)
         # note that before inserting the entries will be sorted by 'word'
+        first_word = True
         for word in main_word_txt.split(', '):
             word = word.strip()
             # "definition" dict is shared between entries in this loop
             entries.append(
                 dict(article_id=num_article, word=word, definition=definition))
+            if first_word:
+                first_word = False
+                # Avoid duplication of translations
+                definition = definition.copy()
+                definition['trads'] = []
 
         if verbose:
             print(filename, drv.mrk, row_id)

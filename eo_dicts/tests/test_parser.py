@@ -273,6 +273,21 @@ def test_trd_inside_only_snc(parser):
         'ĉilio': {'da': {None: ['Chile']}}
     }
 
+def test_trd_multiple_kap(parser):
+    xml = """<drv mrk="arab.SaudaA0ujo">
+        <kap>Sauda <tld lit="A"/>ujo,
+            <var><kap>Saud-<tld lit="A"/>ujo</kap></var>,
+            <var><kap>Saŭda <tld lit="A"/>ujo</kap></var>
+        </kap>
+        <trd lng="pl">Arabia Saudyjska</trd>
+    </drv>"""
+    drv = Drv(parser(xml), {'radix': 'arab'})
+    assert drv.translations() == {
+        'Sauda Arabujo, Saud-Arabujo, Saŭda Arabujo': {
+            'pl': {None: ['Arabia Saudyjska']}
+        }
+    }
+
 def test_refgrp_arrow(parser):
     xml = """<refgrp tip="sin">
         <ref cel="plagx.0o">plaĝo</ref>
