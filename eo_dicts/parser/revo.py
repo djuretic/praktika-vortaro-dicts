@@ -497,7 +497,7 @@ class Tld(Node):
             content = StringWithFormat(self.lit + self.radix[1:])
         else:
             content = StringWithFormat(self.radix or '-----')
-        if isinstance(self.parent, Ekz):
+        if isinstance(self.parent, Ekz) or (self.parent and isinstance(self.parent.parent, Ekz)):
             content = content.apply_format(Format.TLD)
         return content
 

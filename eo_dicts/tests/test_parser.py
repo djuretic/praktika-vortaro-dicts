@@ -41,7 +41,7 @@ def test_article_no_drv(parser):
     assert derivs[0].__class__ is Subart
     parsed = derivs[0].to_text()
     assert parsed.string == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
-    assert parsed.format == {'ekz': [(26, 57)], 'tld': [(34, 36), (41, 43), (50, 52)]}
+    assert parsed.format == {'ekz': [(26, 57)], 'tld': [(26, 28), (34, 36), (41, 43), (50, 52)]}
 
 def test_drv_multiple_kap(parser):
     xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""
