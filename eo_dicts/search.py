@@ -1,11 +1,12 @@
 import sqlite3
 import click
 import os
+from utils import output_dir
 
 @click.command()
 @click.option('--word')
 def search(word):
-    db_filename = os.path.join(os.path.dirname(__file__), 'vortaro.db')
+    db_filename = os.path.join(output_dir(), 'vortaro.db')
     conn = sqlite3.connect(db_filename)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()

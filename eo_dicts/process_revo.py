@@ -6,7 +6,7 @@ import itertools
 from lxml import etree
 import click
 
-from .utils import add_hats, list_languages, get_languages, get_disciplines
+from .utils import add_hats, list_languages, get_languages, get_disciplines, output_dir
 from .parser import revo
 
 
@@ -221,7 +221,7 @@ def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages, min
         list_languages()
         return
 
-    conn = create_db(output_db)
+    conn = create_db(os.path.join(output_dir(), output_db))
     cursor = conn.cursor()
 
     if not dry_run:

@@ -1,9 +1,11 @@
 import sys
+import os
 import functools
 import sqlite3
 from click.testing import CliRunner
 import pytest
 from ..process_revo import main
+from ..utils import output_dir
 
 TEST_DB = 'test.db'
 
@@ -32,11 +34,15 @@ def runner():
     yield cli_runner
 
 
+def db_file():
+    return os.path.join(output_dir(), TEST_DB)
+
+
 def test_process_subart(runner):
     result = runner.invoke(main, ['--output-db', TEST_DB, '--xml-file', '/src/revo/xml/gx.xml'])
     assert result.exit_code == 0
 
-    conn = sqlite3.connect('eo_dicts/' + TEST_DB)
+    conn = sqlite3.connect(db_file())
     cursor = conn.cursor()
     res = cursor.execute("SELECT words, mark, position from definitions")
     assert list(res) == [
@@ -48,7 +54,7 @@ def test_process_subart_2(runner):
     result = runner.invoke(main, ['--output-db', TEST_DB, '--xml-file', '/src/revo/xml/al.xml'])
     assert result.exit_code == 0
 
-    conn = sqlite3.connect('eo_dicts/' + TEST_DB)
+    conn = sqlite3.connect(db_file())
     cursor = conn.cursor()
     res = cursor.execute("SELECT word, definition_id from words")
     assert list(res) == [

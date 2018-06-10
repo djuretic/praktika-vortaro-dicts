@@ -10,7 +10,7 @@ pip install -r requirements.txt
 process_revo
 ```
 
-This will generate the sqlite database `eo_dicts/vortaro.db`.
+This will generate the sqlite database `output/vortaro.db`.
 
 To download the most recent data files from Revo:
 

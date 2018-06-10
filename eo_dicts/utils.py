@@ -58,3 +58,6 @@ def list_languages():
 def letter_enumerate(iterable):
     for n, elem in enumerate(iterable):
         yield (chr(ord('a')+n), elem)
+
+def output_dir():
+    return os.path.join(os.path.dirname(__file__), "..", "output")
