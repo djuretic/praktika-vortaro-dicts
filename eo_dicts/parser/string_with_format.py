@@ -122,3 +122,27 @@ class StringWithFormat:
 
     def __len__(self):
         return len(self.string)
+
+
+
+def expand_tld(string):
+    if not isinstance(string, StringWithFormat) or not string.format.get(Format.TLD.value):
+        return string
+    boundaries = " \n:;;.,•?!()[]{}'\"„“"
+    original_format = string.format[Format.TLD.value]
+    new_format = []
+    for start, end in original_format:
+        for i in range(start, -1, -1):
+            if string.string[i] in boundaries:
+                break
+            start = i
+        for i in range(end, len(string.string)):
+            end = i
+            if string.string[i] in boundaries:
+                break
+        else:
+            end = len(string.string)
+        new_format.append((start, end))
+
+    string.format[Format.TLD.value] = new_format
+    return string

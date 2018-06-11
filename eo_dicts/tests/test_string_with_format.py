@@ -1,4 +1,4 @@
-from ..parser.string_with_format import StringWithFormat
+from ..parser.string_with_format import StringWithFormat, Format, expand_tld
 
 
 def test_init():
@@ -76,3 +76,38 @@ def test_join():
 def test_encode_format():
     s = StringWithFormat().add_bold('Bonan').add_italic(' tagon').add_bold('!')
     assert s.encode_format() == 'bold:0,5;11,12\nitalic:5,11'
+
+def test_expand_tld():
+    s = StringWithFormat()
+    s.add('amik', Format.TLD).add('eco, ge').add('patr', Format.TLD).add('oj')
+    s = expand_tld(s)
+    assert s.string == 'amikeco, gepatroj'
+    assert s.format == {'tld': [(0, 7), (9, 17)]}
+
+def test_expand_tld_start():
+    s = StringWithFormat()
+    s.add('a').add('b', Format.TLD)
+    s = expand_tld(s)
+    assert s.string == 'ab'
+    assert s.format == {'tld': [(0, 2)]}
+
+def test_expand_tld_start2():
+    s = StringWithFormat()
+    s.add(',a').add('b', Format.TLD)
+    s = expand_tld(s)
+    assert s.string == ',ab'
+    assert s.format == {'tld': [(1, 3)]}
+
+def test_expand_tld_end():
+    s = StringWithFormat()
+    s.add('a', Format.TLD).add('b')
+    s = expand_tld(s)
+    assert s.string == 'ab'
+    assert s.format == {'tld': [(0, 2)]}
+
+def test_expand_tld_end2():
+    s = StringWithFormat()
+    s.add('a', Format.TLD).add('b,')
+    s = expand_tld(s)
+    assert s.string == 'ab,'
+    assert s.format == {'tld': [(0, 2)]}

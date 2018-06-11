@@ -8,6 +8,7 @@ import click
 
 from .utils import add_hats, list_languages, get_languages, get_disciplines, output_dir
 from .parser import revo
+from .parser.string_with_format import expand_tld
 
 
 def insert_translations(trads, cursor):
@@ -133,6 +134,7 @@ def parse_article(filename, num_article, cursor, verbose=False):
         found_words.append(main_word_txt)
         row_id = None
         content = drv.to_text()
+        content = expand_tld(content)
         assert 'StringWithFormat' not in content.string
 
         # definition_id will be used to check whether the definition is already in the database
