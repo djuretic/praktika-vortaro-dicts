@@ -572,6 +572,14 @@ class Nom(TextNode):
     pass
 
 
+class Esc(TextNode):
+    pass
+
+
+class Nac(TextNode):
+    pass
+
+
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict():
     entities = {}
