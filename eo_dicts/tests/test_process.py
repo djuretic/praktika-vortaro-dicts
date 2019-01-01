@@ -39,15 +39,17 @@ def db_file():
 
 
 def test_process_subart(runner):
-    result = runner.invoke(main, ['--output-db', TEST_DB, '--xml-file', '/src/revo/xml/gx.xml'])
+    result = runner.invoke(main, ['--output-db', TEST_DB, '--xml-file', '/src/revo/xml/an.xml'])
     assert result.exit_code == 0
 
     conn = sqlite3.connect(db_file())
     cursor = conn.cursor()
     res = cursor.execute("SELECT words, mark, position from definitions")
     assert list(res) == [
-        ('ĝ', 'gx.0.konsonanto', 1),
-        ('ĝo', 'gx.0.nomo', 2),
+        ('-an', 'an.0', 1),
+        ('anaro', 'an.0aro', 3),
+        ('aniĝi', 'an.0igxi', 4),
+        ('ano', 'an.0o', 2)
     ]
 
 def test_process_subart_2(runner):

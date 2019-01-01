@@ -481,6 +481,11 @@ class Sncref(TextNode):
 class Ekz(TextNode):
     base_format = (Format.EKZ)
 
+    def to_text(self):
+        content = super().to_text()
+        content.prepend("\n")
+        return content
+
 
 class Tld(Node):
     def __init__(self, node, extra_info=None):
@@ -586,6 +591,11 @@ def entities_dict():
 
     base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'revo', 'dtd')
     with open(os.path.join(base_dir, 'vokosgn.dtd'), 'rb') as f:
+        dtd = etree.DTD(f)
+        for entity in dtd.iterentities():
+            entities[entity.name] = entity.content
+
+    with open(os.path.join(base_dir, 'vokourl.dtd'), 'rb') as f:
         dtd = etree.DTD(f)
         for entity in dtd.iterentities():
             entities[entity.name] = entity.content

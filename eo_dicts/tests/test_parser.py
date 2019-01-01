@@ -40,8 +40,8 @@ def test_article_no_drv(parser):
     assert len(derivs) == 1
     assert derivs[0].__class__ is Subart
     parsed = derivs[0].to_text()
-    assert parsed.string == 'Prefikso kun la senco al: alveni, alkuri alporti, alesti.'
-    assert parsed.format == {'ekz': [(26, 57)], 'tld': [(26, 28), (34, 36), (41, 43), (50, 52)]}
+    assert parsed.string == 'Prefikso kun la senco al: \nalveni, alkuri alporti, alesti.'
+    assert parsed.format == {'ekz': [(27, 58)], 'tld': [(27, 29), (35, 37), (42, 44), (51, 53)]}
 
 def test_drv_multiple_kap(parser):
     xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""
@@ -67,7 +67,7 @@ def test_drv_whitespace_after_gra_and_ref(parser):
             </ekz>
         </snc>
     </drv>"""
-    assert Drv(parser(xml), {'radix': 'abol'}).to_text().string == '(tr) JUR = abolicii sklaveco estis abolita en Brazilo en 1888. '
+    assert Drv(parser(xml), {'radix': 'abol'}).to_text().string == '(tr) JUR = abolicii \nsklaveco estis abolita en Brazilo en 1888. '
 
 def test_subdrv(parser):
     xml = """<drv mrk="ad.0">
@@ -94,7 +94,7 @@ def test_subdrv_snc(parser):
         <subdrv><dif>Maniero (...)</dif></subdrv>
     </drv>
     """
-    assert Drv(parser(xml), {'radix': 'ir'}).to_text().string == "A. Ago iri: \n\n1. Frazo\n\n2. Alia frazo\n\nB. Maniero (...)"
+    assert Drv(parser(xml), {'radix': 'ir'}).to_text().string == "A. Ago iri: \n\n1. \nFrazo\n\n2. \nAlia frazo\n\nB. Maniero (...)"
 
 def test_snc_single(parser):
     xml = """<snc mrk="abak.0o.ARKI">
@@ -113,14 +113,14 @@ def test_snc_no_tail_after_tld(parser):
 
 def test_snc_ignore_fnt(parser):
     xml = '<snc mrk="-"><dif>Difino <ekz>Frazo<fnt><aut>Iu</aut></fnt>.</ekz></dif></snc>'
-    assert Snc(parser(xml)).to_text().string == 'Difino Frazo.'
+    assert Snc(parser(xml)).to_text().string == 'Difino \nFrazo.'
 
 
 def test_snc_ignore_trd(parser):
     xml = '<snc mrk="-"><dif>Difino <ekz><ind>Frazo</ind>.<trd lng="hu">Trd</trd></ekz></dif></snc>'
     tag = Snc(parser(xml)).to_text()
-    assert tag.string == 'Difino Frazo.'
-    assert tag.format == {'ekz': [(7, 13)]}
+    assert tag.string == 'Difino \nFrazo.'
+    assert tag.format == {'ekz': [(8, 14)]}
 
 def test_snc_replace_tld(parser):
     xml = """<snc mrk="abat.0o">
@@ -146,7 +146,7 @@ def test_snc_whitespace(parser):
         </ekz>
     </dif></snc>
     """
-    assert Snc(parser(xml), {"radix": "kar"}).to_text().string == 'Amata: kara patrino; nia karmemora majstro '
+    assert Snc(parser(xml), {"radix": "kar"}).to_text().string == 'Amata: \nkara patrino; \nnia karmemora majstro '
 
 def test_snc_no_more_whitespace_after_ref(parser):
     xml = """<snc>
