@@ -1,6 +1,7 @@
 *.zip
 *.db
 *.csv
+*.htm
 *.xml
 *.pyc
 *.egg-info
