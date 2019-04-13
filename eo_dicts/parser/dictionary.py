@@ -32,11 +32,13 @@ def process_row(row, cursor, output_table, target_lang, separator=":"):
 
 class DictionaryParser:
     @classmethod
-    def parse_string(cls, input_string, target_lang, output_db, output_table):
+    def parse_string(cls, input_string, target_lang, output_db, output_table, header_lines=0):
         conn = create_db(output_db, output_table, target_lang)
         cursor = conn.cursor()
 
-        for row in input_string.splitlines():
+        for n, row in enumerate(input_string.splitlines()):
+            if n < header_lines:
+                continue
             process_row(row, cursor, output_table, target_lang)
         cursor.execute("CREATE INDEX index_eo_espdic ON {table} (eo)".format(table=output_table))
         cursor.execute("CREATE INDEX index_{lang}_espdic ON {table} ({lang})".format(table=output_table, lang=target_lang))
