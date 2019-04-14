@@ -3,17 +3,18 @@ import sqlite3
 
 class DictionaryParser:
     @classmethod
-    def parse_string(cls, input_string, target_lang, output_db, output_table, header_lines=0):
-        parser = cls(target_lang, output_db, output_table, header_lines)
+    def parse_string(cls, input_string, source_lang, target_lang, output_db, output_table, header_lines=0):
+        parser = cls(source_lang, target_lang, output_db, output_table, header_lines)
         parser.parse(input_string.splitlines())
 
     @classmethod
-    def parse_file(cls, input_filename, target_lang, output_db, output_table, header_lines=0):
+    def parse_file(cls, input_filename, source_lang, target_lang, output_db, output_table, header_lines=0):
         parser = cls(target_lang, output_db, output_table, header_lines)
         with open(input_filename) as f:
             parser.parse(f.readlines())
 
-    def __init__(self, target_lang, output_db, output_table, header_lines):
+    def __init__(self, source_lang, target_lang, output_db, output_table, header_lines):
+        self.source_lang = source_lang
         self.target_lang = target_lang
         self.output_db = output_db
         self.output_table = output_table
@@ -30,10 +31,10 @@ class DictionaryParser:
         c.execute("""
             CREATE TABLE {table} (
                 id integer primary key,
-                eo text,
-                {lang} text
+                {source_lang} text,
+                {target_lang} text
             )
-        """.format(table=self.output_table, lang=self.target_lang))
+        """.format(table=self.output_table, source_lang=self.source_lang, target_lang=self.target_lang))
         return conn
 
     def parse(self, generator):
@@ -48,8 +49,8 @@ class DictionaryParser:
                 continue
             # print(repr([n, row]))
             self.process_row(row, cursor)
-        cursor.execute("CREATE INDEX index_eo_espdic ON {table} (eo)".format(table=self.output_table))
-        cursor.execute("CREATE INDEX index_{lang}_espdic ON {table} ({lang})".format(table=self.output_table, lang=self.target_lang))
+        cursor.execute("CREATE INDEX index_{source_lang}_{table} ON {table} ({source_lang})".format(source_lang=self.source_lang, table=self.output_table))
+        cursor.execute("CREATE INDEX index_{target_lang}_{table} ON {table} ({target_lang})".format(table=self.output_table, target_lang=self.target_lang))
         conn.commit()
         cursor.close()
 
@@ -60,5 +61,5 @@ class DictionaryParser:
         parts = [s.strip() for s in parts]
         print(repr(parts))
         cursor.execute(
-            "INSERT INTO {table} (eo, {lang}) VALUES (?, ?)".format(table=self.output_table, lang=self.target_lang),
+            "INSERT INTO {table} ({source_lang}, {target_lang}) VALUES (?, ?)".format(table=self.output_table, source_lang=self.source_lang, target_lang=self.target_lang),
             (parts[0], parts[1]))
