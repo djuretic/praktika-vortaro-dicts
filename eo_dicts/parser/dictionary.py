@@ -43,6 +43,10 @@ class DictionaryParser:
         for n, row in enumerate(generator):
             if n < self.header_lines:
                 continue
+            row = row.strip()
+            if not row:
+                continue
+            # print(repr([n, row]))
             self.process_row(row, cursor)
         cursor.execute("CREATE INDEX index_eo_espdic ON {table} (eo)".format(table=self.output_table))
         cursor.execute("CREATE INDEX index_{lang}_espdic ON {table} ({lang})".format(table=self.output_table, lang=self.target_lang))
