@@ -4,7 +4,10 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
-from typing import Union, List, Dict, Generator, Optional
+from typing import Union, List, Dict, Generator, Optional, Type, TypeVar
+
+
+T = TypeVar('T')
 
 
 def remove_extra_whitespace(string: str) -> str:
@@ -22,7 +25,7 @@ class Node:
     def __init__(self, node, extra_info=None):
         if extra_info is None:
             extra_info = {}
-        self.parent = extra_info.get('parent')
+        self.parent: Optional['Node'] = extra_info.get('parent')
         self.children: List[str, 'Node']
         self.parse_children(node, extra_info)
         self.text = None
@@ -64,19 +67,18 @@ class Node:
                     children.append(' ')
         return children
 
-    # TODO Generator[Union[str, 'Node'], None, None]
-    def get(self, *args) -> Generator['Node', None, None]:
+    def get(self, *args: Type[T]) -> Generator[T, None, None]:
         "Get nodes based on their class"
         for tag in self.children:
             if tag.__class__ in args:
                 yield tag
 
-    def get_except(self, *args) -> Generator['Node', None, None]:
+    def get_except(self, *args) -> Generator[Union[str, 'Node'], None, None]:
         for tag in self.children:
             if tag.__class__ not in args:
                 yield tag
 
-    def get_recursive(self, *args) -> Generator['Node', None, None]:
+    def get_recursive(self, *args: Type[T]) -> Generator[T, None, None]:
         if not hasattr(self, 'children'):
             return
         for tag in self.children:
@@ -88,9 +90,9 @@ class Node:
                 for nested_tag in tag.get_recursive(*args):
                     yield nested_tag
 
-    def get_ancestor(self, *args) -> Optional['Node']:
+    def get_ancestor(self, *args: Type[T]) -> T:
         if not self.parent:
-            return None
+            raise
         elif self.parent.__class__ in args:
             return self.parent
         return self.parent.get_ancestor(*args)
@@ -98,7 +100,7 @@ class Node:
     def to_text(self) -> StringWithFormat:
         pass
 
-    def main_word(self):
+    def main_word(self) -> str:
         kap = getattr(self, 'kap', '')
         if not kap:
             kap = self.get_ancestor(Art).kap[0]
