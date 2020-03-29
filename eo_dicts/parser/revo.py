@@ -4,9 +4,10 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
+from typing import Union, List, Dict, Generator, Optional
 
 
-def remove_extra_whitespace(string):
+def remove_extra_whitespace(string: str) -> str:
     cleaned = ' '.join(string.split())
     # Preserve trailing whitespace
     if string and string[-1] == ' ':
@@ -22,13 +23,15 @@ class Node:
         if extra_info is None:
             extra_info = {}
         self.parent = extra_info.get('parent')
+        self.children: List[str, 'Node']
         self.parse_children(node, extra_info)
+        self.text = None
 
     def __repr__(self):
         keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items() if k != 'parent')
         return "<%s %s>" % (self.__class__.__name__, keys)
 
-    def parse_children(self, node, extra_info=None):
+    def parse_children(self, node, extra_info=None) -> None:
         self.children = []
         if node.text and node.text.strip():
             self.children.append(remove_extra_whitespace(node.text))
@@ -45,7 +48,7 @@ class Node:
         self.children = self.add_whitespace_nodes_to_children()
         # print(node.tag, '- children:', self.children)
 
-    def add_whitespace_nodes_to_children(self):
+    def add_whitespace_nodes_to_children(self) -> List[Union[str, 'Node']]:
         children = []
         for n, child in enumerate(self.children):
             children.append(child)
@@ -61,18 +64,19 @@ class Node:
                     children.append(' ')
         return children
 
-    def get(self, *args):
+    # TODO Generator[Union[str, 'Node'], None, None]
+    def get(self, *args) -> Generator['Node', None, None]:
         "Get nodes based on their class"
         for tag in self.children:
             if tag.__class__ in args:
                 yield tag
 
-    def get_except(self, *args):
+    def get_except(self, *args) -> Generator['Node', None, None]:
         for tag in self.children:
             if tag.__class__ not in args:
                 yield tag
 
-    def get_recursive(self, *args):
+    def get_recursive(self, *args) -> Generator['Node', None, None]:
         if not hasattr(self, 'children'):
             return
         for tag in self.children:
@@ -84,14 +88,14 @@ class Node:
                 for nested_tag in tag.get_recursive(*args):
                     yield nested_tag
 
-    def get_ancestor(self, *args):
+    def get_ancestor(self, *args) -> Optional['Node']:
         if not self.parent:
             return None
         elif self.parent.__class__ in args:
             return self.parent
         return self.parent.get_ancestor(*args)
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         pass
 
     def main_word(self):
@@ -100,8 +104,8 @@ class Node:
             kap = self.get_ancestor(Art).kap[0]
         return add_hats(kap.strip())
 
-    def translations(self):
-        trds = {}
+    def translations(self) -> Dict[str, Dict[str, Dict]]:
+        trds: Dict[str, Dict[str, Dict]] = {}
         for tag in self.get_recursive(Trd, Trdgrp):
             if not isinstance(tag.parent, (Drv, Snc)):
                 continue
@@ -138,9 +142,9 @@ class Node:
 
 class TextNode(Node):
     # Format enum, can also be a list
-    base_format = None
+    base_format: Union[List, Format, None] = None
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         parts = []
         for node in self.children:
             if isinstance(node, str):
@@ -172,7 +176,7 @@ class Art(Node):
         extra_info['radix'] = self.kap[0]
         super().__init__(node, extra_info)
 
-    def derivations(self):
+    def derivations(self): # TODO -> Generator[Drv, None, None]:
         for subart in self.get(Subart):
             for drv in subart.derivations():
                 yield drv
@@ -201,7 +205,7 @@ class Mlg(TextNode):
 
 
 class Vspec(TextNode):
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         return StringWithFormat("(").add(super().to_text()).add(")")
 
 class Ofc(TextNode):
@@ -586,8 +590,8 @@ class Nac(TextNode):
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
-def entities_dict():
-    entities = {}
+def entities_dict() -> Dict:
+    entities: Dict = {}
 
     base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'revo', 'dtd')
     with open(os.path.join(base_dir, 'vokosgn.dtd'), 'rb') as f:
@@ -607,7 +611,7 @@ def entities_dict():
     return entities
 
 
-def parse_article(filename):
+def parse_article(filename: str) -> Art:
     with open(filename) as f:
         article = f.read()
 

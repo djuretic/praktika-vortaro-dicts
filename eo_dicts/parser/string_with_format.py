@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional, Dict, List, Tuple, Union
 
 
 class Format(Enum):
@@ -10,9 +11,9 @@ class Format(Enum):
 
 
 class StringWithFormat:
-    def __init__(self, string=None):
+    def __init__(self, string: Optional[str] = None):
         self.string = string or ''
-        self.format = {}
+        self.format: Dict = {}
 
     @classmethod
     def join(cls, string_list, separator):
@@ -25,7 +26,7 @@ class StringWithFormat:
             base += string
         return base
 
-    def add(self, other, format_type=None, keep_whitespace=False):
+    def add(self, other, format_type=None, keep_whitespace=False) -> 'StringWithFormat':
         # print('ADD', repr(self), repr(self.format), repr(other), format_type)
         if format_type and format_type.value not in self.format:
             self.format[format_type.value] = []
@@ -55,13 +56,13 @@ class StringWithFormat:
             self.string += other
         return self
 
-    def add_italic(self, other):
+    def add_italic(self, other) -> 'StringWithFormat':
         return self.add(other, Format.ITALIC)
 
-    def add_bold(self, other):
+    def add_bold(self, other) -> 'StringWithFormat':
         return self.add(other, Format.BOLD)
 
-    def apply_format(self, format_type):
+    def apply_format(self, format_type: Union[List, Tuple, Format, None]) -> 'StringWithFormat':
         if not format_type:
             return self
         if isinstance(format_type, (list, tuple)):
@@ -73,16 +74,16 @@ class StringWithFormat:
             self.format[format_type.value].append((0, len(self.string)))
         return self
 
-    def __add__(self, other):
+    def __add__(self, other) -> 'StringWithFormat':
         return self.add(other)
 
-    def prepend(self, other):
+    def prepend(self, other) -> 'StringWithFormat':
         alt = StringWithFormat(other).add(self)
         self.string = alt.string
         self.format = alt.format
         return self
 
-    def strip(self):
+    def strip(self) -> 'StringWithFormat':
         original = self.string
         base_len = len(original)
         new_format = dict(self.format)
@@ -105,22 +106,22 @@ class StringWithFormat:
         new_string_format.format = new_format
         return new_string_format
 
-    def encode_format(self):
+    def encode_format(self) -> str:
         encoded = []
         for fmt, values in self.format.items():
             tmp_list = ['%s,%s' % item for item in values]
             encoded.append("%s:%s" % (fmt, ';'.join(tmp_list)))
         return '\n'.join(encoded)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if isinstance(other, StringWithFormat):
             return self.string == other.string and self.format == other.format
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s %s>' % (self.__class__.__name__, repr(self.string))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.string)
 
 

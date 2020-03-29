@@ -5,7 +5,7 @@ from utils import output_dir
 
 @click.command()
 @click.option('--word')
-def search(word):
+def search(word: str) -> None:
     db_filename = os.path.join(output_dir(), 'vortaro.db')
     conn = sqlite3.connect(db_filename)
     conn.row_factory = sqlite3.Row

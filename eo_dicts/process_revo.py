@@ -5,15 +5,16 @@ import glob
 import itertools
 from lxml import etree
 import click
+from typing import List, Dict
 
 from .utils import add_hats, list_languages, get_languages, get_disciplines, output_dir
 from .parser import revo
 from .parser.string_with_format import expand_tld
 
 
-def insert_translations(trads, cursor):
+def insert_translations(trads: List[Dict], cursor: sqlite3.Cursor) -> None:
     # flatten
-    all_trans = []
+    all_trans: List[Dict] = []
     for translation in trads:
         for snc_index, words in translation['data'].items():
             for word in words:
@@ -30,7 +31,7 @@ def insert_translations(trads, cursor):
         )
 
 
-def create_db(output_db):
+def create_db(output_db: str) -> sqlite3.Connection:
     base_dir = os.path.dirname(__file__)
     db_filename = os.path.join(base_dir, output_db)
     try:
@@ -61,7 +62,7 @@ def create_db(output_db):
 
     return conn
 
-def create_langs_tables(cursor, entries_per_lang):
+def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: Dict) -> None:
     cursor.execute("""
         CREATE TABLE languages (
             id integer primary key,
@@ -94,7 +95,7 @@ def create_langs_tables(cursor, entries_per_lang):
             VALUES (?, ?, ?)
         """, (lang, lang_names[lang][1], entries_per_lang[lang]))
 
-def create_disciplines_tables(cursor):
+def create_disciplines_tables(cursor: sqlite3.Cursor) -> None:
     cursor.execute("""
         CREATE TABLE disciplines (
             id integer primary key,
@@ -109,7 +110,7 @@ def create_disciplines_tables(cursor):
             (code, discipline))
 
 
-def parse_article(filename, num_article, cursor, verbose=False):
+def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False) -> List[Dict]:
     art = None
     try:
         art = revo.parse_article(filename)
@@ -118,7 +119,7 @@ def parse_article(filename, num_article, cursor, verbose=False):
         raise
 
     found_words = []
-    entries = []
+    entries: List[Dict] = []
     has_subart = False
     drvs = list(art.derivations())
     for pos, drv in enumerate(drvs, 1):
@@ -162,12 +163,12 @@ def parse_article(filename, num_article, cursor, verbose=False):
     return entries
 
 
-def create_index(cursor):
+def create_index(cursor: sqlite3.Cursor) -> None:
     cursor.execute("CREATE INDEX index_word_words ON words (word)")
     cursor.execute("CREATE INDEX index_definition_id_words ON words (definition_id)")
 
 
-def insert_entries(entries, cursor, min_entries_to_include_lang):
+def insert_entries(entries: List[Dict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int) -> None:
     entries = sorted(entries, key=lambda x: x['word'].lower())
     translations = []
     for entry in entries:
@@ -218,7 +219,10 @@ def insert_entries(entries, cursor, min_entries_to_include_lang):
 @click.option('--dry-run', is_flag=True)
 @click.option('--show-languages', is_flag=True)
 @click.option('--min-entries-to-include-lang', type=int, default=100)
-def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages, min_entries_to_include_lang):
+def main(
+        word: str, xml_file: str, output_db: str, limit: int,
+        verbose: bool, dry_run: bool, show_languages: bool,
+        min_entries_to_include_lang: int) -> None:
     if show_languages:
         list_languages()
         return
@@ -263,4 +267,5 @@ def main(word, xml_file, output_db, limit, verbose, dry_run, show_languages, min
 
 
 if __name__ == '__main__':
+    # pylint: disable=no-value-for-parameter
     main()

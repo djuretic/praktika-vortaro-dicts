@@ -6,6 +6,7 @@
 *.egg-info
 __pycache__
 .cache
+.mypy_cache
 fabfile.py
 docker-compose.yml
 Dockerfile
