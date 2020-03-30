@@ -252,7 +252,7 @@ class Drv(Node):
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         meanings = []
         content = StringWithFormat()
 
@@ -273,23 +273,24 @@ class Drv(Node):
                 text = snc.to_text()
             meanings.append(text)
 
-        for n, subdrv in letter_enumerate(self.get(Subdrv)):
+        for nn, subdrv in letter_enumerate(self.get(Subdrv)):
             text = subdrv.to_text()
-            text.prepend("%s. " % n.upper())
-            if n == 'a' and (meanings or len(content)):
+            text.prepend("%s. " % nn.upper())
+            if nn == 'a' and (meanings or len(content)):
                 text.prepend('\n\n')
             meanings.append(text)
 
         content += StringWithFormat.join(meanings, '\n\n')
 
-        for node in self.get_except(Subdrv, Snc, Gra, Uzo, Fnt, Kap, Dif, Mlg):
-            if isinstance(node, Ref) and node.tip == 'dif':
+        # Renaming node2 to node causes issues with mypy
+        for node2 in self.get_except(Subdrv, Snc, Gra, Uzo, Fnt, Kap, Dif, Mlg):
+            if isinstance(node2, Ref) and node2.tip == 'dif':
                 continue
-            if isinstance(node, str):
+            if isinstance(node2, str):
                 # Nodes added by hand in add_whitespace_nodes_to_children
-                content += node
+                content += node2
             else:
-                content += node.to_text()
+                content += node2.to_text()
 
         return content
 
@@ -298,7 +299,7 @@ class Subdrv(Node):
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         content = StringWithFormat()
 
         # Fnt omitted
@@ -313,10 +314,12 @@ class Subdrv(Node):
             text.prepend("\n\n")
             content += text
 
-        for node in self.get_except(Snc, Gra, Uzo, Fnt, Dif, Ref):
-            if isinstance(node, Ref) and node.tip == 'dif':
+        for text_node in self.get_except(Snc, Gra, Uzo, Fnt, Dif, Ref):
+            if isinstance(text_node, Ref) and text_node.tip == 'dif':
                 continue
-            content += node.to_text()
+            if isinstance(text_node, str):
+                raise
+            content += text_node.to_text()
         return content
 
 class Snc(Node):
@@ -328,7 +331,7 @@ class Snc(Node):
         mrk = self.mrk or extra_info['radix']
         super().__init__(node, extra_info)
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         content = StringWithFormat()
 
         # Fnt ignored
@@ -348,14 +351,15 @@ class Snc(Node):
                 subs.append(text)
             content += StringWithFormat.join(subs, '\n\n')
 
-        for node in self.get_except(Gra, Uzo, Fnt, Dif, Subsnc):
-            if isinstance(node, Ref) and node.tip == 'dif':
+        # Renaming node2 to node causes issues with mypy
+        for node2 in self.get_except(Gra, Uzo, Fnt, Dif, Subsnc):
+            if isinstance(node2, Ref) and node2.tip == 'dif':
                 continue
-            if isinstance(node, str):
+            if isinstance(node2, str):
                 # Nodes added by hand in add_whitespace_nodes_to_children
-                content += node
+                content += node2
             else:
-                content += node.to_text()
+                content += node2.to_text()
 
         return content
 

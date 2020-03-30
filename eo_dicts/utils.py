@@ -58,7 +58,7 @@ def list_languages() -> None:
     for n, lang in enumerate(langs, 1):
         print(n, lang['code'], lang['name'])
 
-def letter_enumerate(iterable: Iterable[T]): # TODO -> Generator[Tuple[str, T], None, None]:
+def letter_enumerate(iterable: Iterable[T]) -> Generator[Tuple[str, T], None, None]:
     for n, elem in enumerate(iterable):
         yield (chr(ord('a')+n), elem)
 
