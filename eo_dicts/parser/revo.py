@@ -211,8 +211,8 @@ class Vspec(TextNode):
         return StringWithFormat("(").add(super().to_text()).add(")")
 
 class Ofc(TextNode):
-    def to_text(self):
-        return ''
+    def to_text(self) -> StringWithFormat:
+        return StringWithFormat('')
 
 
 class Var(TextNode):
@@ -376,7 +376,7 @@ class Uzo(TextNode):
         if self.tip == 'fak':
             self.base_format = Format.UZO_FAKO
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         text = super().to_text()
         if self.tip == 'stl':
             mapping = {
@@ -390,10 +390,7 @@ class Uzo(TextNode):
                 "KOMUNE": "(komune)",
                 "NEO": "(neologismo)"
             }
-            if isinstance(text, str):
-                text = mapping.get(text, text)
-            else:
-                text = mapping.get(text.string, text.string)
+            text = StringWithFormat(mapping.get(text.string, text.string))
         return text + ' '
 
 
@@ -402,8 +399,8 @@ class Dif(TextNode):
 
 
 class Tezrad(Node):
-    def to_text(self):
-        return ''
+    def to_text(self) -> StringWithFormat:
+        return StringWithFormat('')
 
 
 # TODO link to url
@@ -422,10 +419,10 @@ class Trd(TextNode):
         self.lng = node.get('lng')
 
     # abel.xml has a trd inside a dif
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         if isinstance(self.parent, Dif):
             return super().to_text()
-        return ''
+        return StringWithFormat('')
 
     def parse_trd(self):
         return (self.lng, super().to_text().string)
@@ -436,8 +433,8 @@ class Trdgrp(Node):
         self.lng = node.get('lng')
         super().__init__(node, extra_info)
 
-    def to_text(self):
-        return ''
+    def to_text(self) -> StringWithFormat:
+        return StringWithFormat('')
 
     def parse_trd(self):
         return (self.lng, [trd.parse_trd()[1] for trd in self.get(Trd)])
@@ -445,7 +442,7 @@ class Trdgrp(Node):
 
 class Ref(TextNode):
     @staticmethod
-    def add_arrow(tip, text):
+    def add_arrow(tip: Optional[str], text: StringWithFormat) -> StringWithFormat:
         if not tip:
             return text
         symbol = '→'
@@ -459,7 +456,7 @@ class Ref(TextNode):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         if isinstance(self.parent, (Dif, Rim, Ekz, Klr)):
             return super().to_text()
         return Ref.add_arrow(self.tip, super().to_text())
@@ -478,7 +475,7 @@ class Refgrp(TextNode):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         if isinstance(self.parent, (Dif, Rim, Ekz, Klr)):
             return super().to_text()
         return Ref.add_arrow(self.tip, super().to_text())
@@ -491,7 +488,7 @@ class Sncref(TextNode):
 class Ekz(TextNode):
     base_format = (Format.EKZ)
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         content = super().to_text()
         content.prepend("\n")
         return content
@@ -506,7 +503,7 @@ class Tld(Node):
         self.radix = self.radix.strip()
         self.parent = extra_info.get('parent')
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         content = None
         if self.lit and self.radix:
             content = StringWithFormat(self.lit + self.radix[1:])
@@ -526,7 +523,7 @@ class Rim(TextNode):
         super().__init__(node, extra_info)
         self.num = node.get('num') or ''
 
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         string = super().to_text()
         if self.num:
             content = StringWithFormat().add_bold("\n\nRim. %s: " % self.num)
@@ -536,13 +533,13 @@ class Rim(TextNode):
 
 
 class Aut(TextNode):
-    def to_text(self):
+    def to_text(self) -> StringWithFormat:
         return StringWithFormat("[").add(super().to_text()).add("]")
 
 
 class Fnt(Node):
-    def to_text(self):
-        return ''
+    def to_text(self) -> StringWithFormat:
+        return StringWithFormat('')
 
 # found in zon.xml
 class Frm(TextNode):
@@ -596,8 +593,8 @@ class Nac(TextNode):
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
-def entities_dict() -> Dict:
-    entities: Dict = {}
+def entities_dict() -> Dict[str, str]:
+    entities: Dict[str, str] = {}
 
     base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'revo', 'dtd')
     with open(os.path.join(base_dir, 'vokosgn.dtd'), 'rb') as f:
