@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
-from typing import Union, List, Dict, Generator, Optional, Type, TypeVar
+from typing import Union, List, Tuple, Dict, Generator, Optional, Type, TypeVar, cast
 
 
 T = TypeVar('T')
@@ -20,8 +20,6 @@ def remove_extra_whitespace(string: str) -> str:
     return cleaned
 
 class Node:
-    parent = None
-
     def __init__(self, node, extra_info=None):
         if extra_info is None:
             extra_info = {}
@@ -94,7 +92,9 @@ class Node:
         if not self.parent:
             raise
         elif self.parent.__class__ in args:
-            return self.parent
+            # for mypy
+            parent = cast(T, self.parent)
+            return parent
         return self.parent.get_ancestor(*args)
 
     def to_text(self) -> StringWithFormat:
@@ -106,8 +106,8 @@ class Node:
             kap = self.get_ancestor(Art).kap[0]
         return add_hats(kap.strip())
 
-    def translations(self) -> Dict[str, Dict[str, Dict]]:
-        trds: Dict[str, Dict[str, Dict]] = {}
+    def translations(self) -> Dict[str, Dict[str, Dict[Optional[int], List[str]]]]:
+        trds: Dict[str, Dict[str, Dict[Optional[int], List[str]]]] = {}
         for tag in self.get_recursive(Trd, Trdgrp):
             if not isinstance(tag.parent, (Drv, Snc)):
                 continue
@@ -131,6 +131,8 @@ class Node:
             if main_word not in trds:
                 trds[main_word] = {}
 
+            if not isinstance(tag, (Trd, Trdgrp)):
+                raise
             lng, texts = tag.parse_trd()
             if isinstance(texts, str):
                 texts = [texts]
@@ -166,11 +168,13 @@ class TextNode(Node):
 
 
 class Art(Node):
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         if extra_info is None:
             extra_info = {}
         assert node.tag == 'art'
         rad = node.find('kap/rad')
+        if not rad:
+            raise
         tail = ''
         if rad.tail:
             tail = rad.tail.strip()
@@ -178,7 +182,7 @@ class Art(Node):
         extra_info['radix'] = self.kap[0]
         super().__init__(node, extra_info)
 
-    def derivations(self): # TODO -> Generator[Drv, None, None]:
+    def derivations(self) -> Generator[Union[Subart, Drv], None, None]:
         for subart in self.get(Subart):
             for drv in subart.derivations():
                 yield drv
@@ -225,7 +229,7 @@ class Subart(TextNode):
         self.mrk = ''
         self.kap = ''
 
-    def derivations(self):
+    def derivations(self) -> Generator[Union[Subart, Drv], None, None]:
         # Note that this method sometimes will return the subart node
         drvs = list(self.get(Drv))
         if len(drvs) == 1:
@@ -414,9 +418,9 @@ class Lstref(TextNode):
 
 
 class Trd(TextNode):
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.lng = node.get('lng')
+        self.lng = node.get('lng') or ''
 
     # abel.xml has a trd inside a dif
     def to_text(self) -> StringWithFormat:
@@ -424,19 +428,19 @@ class Trd(TextNode):
             return super().to_text()
         return StringWithFormat('')
 
-    def parse_trd(self):
+    def parse_trd(self) -> Tuple[str, str]:
         return (self.lng, super().to_text().string)
 
 
 class Trdgrp(Node):
-    def __init__(self, node, extra_info=None):
-        self.lng = node.get('lng')
+    def __init__(self, node: ET.Element, extra_info=None):
+        self.lng = node.get('lng') or ''
         super().__init__(node, extra_info)
 
     def to_text(self) -> StringWithFormat:
         return StringWithFormat('')
 
-    def parse_trd(self):
+    def parse_trd(self) -> Tuple[str, List[str]]:
         return (self.lng, [trd.parse_trd()[1] for trd in self.get(Trd)])
 
 
@@ -452,7 +456,7 @@ class Ref(TextNode):
         content += text
         return content
 
-    def __init__(self,node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
 
@@ -471,7 +475,7 @@ class Ref(TextNode):
 
 
 class Refgrp(TextNode):
-    def __init__(self,node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
 
@@ -495,11 +499,11 @@ class Ekz(TextNode):
 
 
 class Tld(Node):
-    def __init__(self, node, extra_info=None):
-        self.radix = None
+    def __init__(self, node: ET.Element, extra_info=None):
+        self.radix = ''
         self.lit = node.get('lit') or ''
         if extra_info:
-            self.radix = extra_info.get('radix')
+            self.radix = extra_info.get('radix') or ''
         self.radix = self.radix.strip()
         self.parent = extra_info.get('parent')
 
@@ -519,7 +523,7 @@ class Klr(TextNode):
 
 
 class Rim(TextNode):
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
         self.num = node.get('num') or ''
 
@@ -624,6 +628,8 @@ def parse_article(filename: str) -> Art:
     tree = ET.fromstring(article, parser=xml_parser)
 
     art = tree.find('art')
+    if not art:
+        raise Exception('XML file does not contain <art> tag!')
     return Art(art)
 
 
