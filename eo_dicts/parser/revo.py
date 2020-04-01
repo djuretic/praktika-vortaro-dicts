@@ -4,10 +4,12 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
-from typing import Union, List, Tuple, Dict, Generator, Optional, Type, TypeVar, cast
+from typing import (
+    Union, List, Tuple, Dict, Iterator, Optional, Type,
+    TypeVar, cast, overload)
 
 
-T = TypeVar('T')
+T = TypeVar('T', bound='Node')
 
 
 def remove_extra_whitespace(string: str) -> str:
@@ -24,7 +26,7 @@ class Node:
         if extra_info is None:
             extra_info = {}
         self.parent: Optional['Node'] = extra_info.get('parent')
-        self.children: List[str, 'Node']
+        self.children: List[Union[str, 'Node']]
         self.parse_children(node, extra_info)
         self.text = None
 
@@ -65,22 +67,24 @@ class Node:
                     children.append(' ')
         return children
 
-    def get(self, *args: Type[T]) -> Generator[T, None, None]:
+    def get(self, *args: Type[T]) -> Iterator[T]:
         "Get nodes based on their class"
         for tag in self.children:
             if tag.__class__ in args:
+                tag = cast(T, tag)
                 yield tag
 
-    def get_except(self, *args) -> Generator[Union[str, 'Node'], None, None]:
+    def get_except(self, *args: Type['Node']) -> Iterator[Union[str, 'Node']]:
         for tag in self.children:
             if tag.__class__ not in args:
                 yield tag
 
-    def get_recursive(self, *args: Type[T]) -> Generator[T, None, None]:
+    def get_recursive(self, *args: Type[T]) -> Iterator[T]:
         if not hasattr(self, 'children'):
             return
         for tag in self.children:
             if tag.__class__ in args:
+                tag = cast(T, tag)
                 yield tag
             elif isinstance(tag, str):
                 continue
@@ -92,7 +96,6 @@ class Node:
         if not self.parent:
             raise
         elif self.parent.__class__ in args:
-            # for mypy
             parent = cast(T, self.parent)
             return parent
         return self.parent.get_ancestor(*args)
@@ -173,7 +176,7 @@ class Art(Node):
             extra_info = {}
         assert node.tag == 'art'
         rad = node.find('kap/rad')
-        if not rad:
+        if rad is None:
             raise
         tail = ''
         if rad.tail:
@@ -182,7 +185,7 @@ class Art(Node):
         extra_info['radix'] = self.kap[0]
         super().__init__(node, extra_info)
 
-    def derivations(self) -> Generator[Union[Subart, Drv], None, None]:
+    def derivations(self) -> Iterator[Union['Subart', 'Drv']]:
         for subart in self.get(Subart):
             for drv in subart.derivations():
                 yield drv
@@ -224,12 +227,12 @@ class Var(TextNode):
 
 
 class Subart(TextNode):
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
         self.mrk = ''
         self.kap = ''
 
-    def derivations(self) -> Generator[Union[Subart, Drv], None, None]:
+    def derivations(self) -> Iterator[Union['Subart', 'Drv']]:
         # Note that this method sometimes will return the subart node
         drvs = list(self.get(Drv))
         if len(drvs) == 1:
@@ -247,11 +250,13 @@ class Subart(TextNode):
             yield self
 
 class Drv(Node):
-    def __init__(self, node, extra_info=None):
-        self.mrk = node.get('mrk')
+    def __init__(self, node: ET.Element, extra_info=None):
+        self.mrk = node.get('mrk') or ''
         if not extra_info:
             extra_info = {}
-        kap = Kap(node.find('kap'), extra_info)
+        kap_node = node.find('kap')
+        assert kap_node is not None
+        kap = Kap(kap_node, extra_info)
         self.kap = kap.to_text().string
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
@@ -299,7 +304,7 @@ class Drv(Node):
         return content
 
 class Subdrv(Node):
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
 
@@ -368,13 +373,13 @@ class Snc(Node):
         return content
 
 class Subsnc(TextNode):
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
         self.mrk = node.get('mrk')
 
 
 class Uzo(TextNode):
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
         self.tip = node.get('tip')
         if self.tip == 'fak':

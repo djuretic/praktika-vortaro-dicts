@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 import os
-from typing import Dict, List, Optional, Generator, Tuple, TypeVar, Iterable
+from typing import Dict, List, Optional, Iterator, Tuple, TypeVar, Iterable
 
 T = TypeVar('T')
 
@@ -37,14 +37,14 @@ def add_hats(word: str) -> str:
         res += word[-1]
     return res
 
-def get_languages(): # TODO -> List[Dict[str, Optional[str]]]:
+def get_languages() -> List[Dict[str, Optional[str]]]:
     base_dir = os.path.dirname(__file__)
     xml_path = os.path.join(base_dir, '..', 'revo', 'cfg', 'lingvoj.xml')
     tree = ET.parse(xml_path)
     langs = tree.findall('lingvo')
     alphabet = 'abcĉdefgĝhĥijĵklmnoprsŝtuŭvz/-'
     # normal sort puts ĉ, ĝ,... at the end
-    langs = sorted(langs, key=lambda x: [alphabet.index(c) for c in x.text])
+    langs = sorted(langs, key=lambda x: [alphabet.index(c) for c in (x.text or '')])
     return [{'code': lang.get('kodo'), 'name': lang.text } for lang in langs]
 
 def get_disciplines() -> Dict[str, Optional[str]]:
@@ -58,7 +58,7 @@ def list_languages() -> None:
     for n, lang in enumerate(langs, 1):
         print(n, lang['code'], lang['name'])
 
-def letter_enumerate(iterable: Iterable[T]) -> Generator[Tuple[str, T], None, None]:
+def letter_enumerate(iterable: Iterable[T]) -> Iterator[Tuple[str, T]]:
     for n, elem in enumerate(iterable):
         yield (chr(ord('a')+n), elem)
 
