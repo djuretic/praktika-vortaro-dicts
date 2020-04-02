@@ -5,11 +5,28 @@ import glob
 import itertools
 from lxml import etree
 import click
-from typing import List, Dict
+from typing import List, Dict, Any, TypedDict, Optional
 
 from .utils import add_hats, list_languages, get_languages, get_disciplines, output_dir
 from .parser import revo
 from .parser.string_with_format import expand_tld
+
+
+class DefinitionDict(TypedDict):
+    article_id: int
+    word: str
+    mark: str
+    definition: str
+    format: str
+    trads: Dict
+    position: int
+    definition_id: Optional[int]
+
+
+class EntryDict(TypedDict):
+    article_id: int
+    word: str
+    definition: DefinitionDict
 
 
 def insert_translations(trads: List[Dict], cursor: sqlite3.Cursor) -> None:
@@ -110,7 +127,7 @@ def create_disciplines_tables(cursor: sqlite3.Cursor) -> None:
             (code, discipline))
 
 
-def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False) -> List[Dict]:
+def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False) -> List[EntryDict]:
     art = None
     try:
         art = revo.parse_article(filename)
@@ -119,7 +136,7 @@ def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbo
         raise
 
     found_words = []
-    entries: List[Dict] = []
+    entries: List[EntryDict] = []
     has_subart = False
     drvs = list(art.derivations())
     for pos, drv in enumerate(drvs, 1):
@@ -139,7 +156,7 @@ def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbo
         assert 'StringWithFormat' not in content.string
 
         # definition_id will be used to check whether the definition is already in the database
-        definition = dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
+        definition: DefinitionDict = dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
             definition=content.string, format=content.encode_format(),
             trads=drv.translations(), position=pos, definition_id=None)
         # note that before inserting the entries will be sorted by 'word'
@@ -153,7 +170,7 @@ def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbo
                 first_word = False
                 # Avoid duplication of translations
                 definition = definition.copy()
-                definition['trads'] = []
+                definition['trads'] = {}
 
         if verbose:
             print(filename, drv.mrk, row_id)
@@ -168,7 +185,7 @@ def create_index(cursor: sqlite3.Cursor) -> None:
     cursor.execute("CREATE INDEX index_definition_id_words ON words (definition_id)")
 
 
-def insert_entries(entries: List[Dict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int) -> None:
+def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int) -> None:
     entries = sorted(entries, key=lambda x: x['word'].lower())
     translations = []
     for entry in entries:
@@ -183,7 +200,9 @@ def insert_entries(entries: List[Dict], cursor: sqlite3.Cursor, min_entries_to_i
                     definition['mark'], definition['position'],
                     definition['definition'], definition['format']))
             entry['definition']['definition_id'] = cursor.lastrowid
-        def_id = entry['definition']['definition_id']
+
+        assert entry['definition']['definition_id'] is not None
+        def_id: int = entry['definition']['definition_id']
 
         cursor.execute(
             "INSERT into words (word, definition_id) values (?, ?)",
@@ -233,7 +252,7 @@ def main(
     if not dry_run:
         create_disciplines_tables(cursor)
 
-    entries = []
+    entries: List[EntryDict] = []
     try:
         files = []
         if xml_file:

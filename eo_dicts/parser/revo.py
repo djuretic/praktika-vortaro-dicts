@@ -22,7 +22,7 @@ def remove_extra_whitespace(string: str) -> str:
     return cleaned
 
 class Node:
-    def __init__(self, node, extra_info=None):
+    def __init__(self, node: ET.Element, extra_info=None):
         if extra_info is None:
             extra_info = {}
         self.parent: Optional['Node'] = extra_info.get('parent')
@@ -34,7 +34,7 @@ class Node:
         keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items() if k != 'parent')
         return "<%s %s>" % (self.__class__.__name__, keys)
 
-    def parse_children(self, node, extra_info=None) -> None:
+    def parse_children(self, node: ET.Element, extra_info: Dict[str, 'Node']) -> None:
         self.children = []
         if node.text and node.text.strip():
             self.children.append(remove_extra_whitespace(node.text))
