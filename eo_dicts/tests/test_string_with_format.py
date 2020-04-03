@@ -14,6 +14,7 @@ def test_add():
     string.add(' mondo!')
     assert string.string == 'Saluton mondo!'
 
+
 def test_add_format():
     string = StringWithFormat()
     string.add_italic('Saluton')
@@ -51,19 +52,22 @@ def test_prepend():
     assert string.string == 'Saluton mondo!'
     assert string.format == {'italic': [(8, 14)]}
 
+
 def test_strip_left():
     string = StringWithFormat()
     string.add_italic('  Bonan tagon')
     string = string.strip()
     assert string.string == 'Bonan tagon'
-    assert string.format ==  {'italic': [(0, 11)]}
+    assert string.format == {'italic': [(0, 11)]}
+
 
 def test_strip_right():
     string = StringWithFormat()
     string.add_italic('Bonan tagon  ')
     string = string.strip()
     assert string.string == 'Bonan tagon'
-    assert string.format ==  {'italic': [(0, 11)]}
+    assert string.format == {'italic': [(0, 11)]}
+
 
 def test_join():
     s1 = StringWithFormat().add_italic('a')
@@ -73,9 +77,11 @@ def test_join():
     assert string.string == 'a-b-c'
     assert string.format == {'italic': [(0, 1), (4, 5)]}
 
+
 def test_encode_format():
     s = StringWithFormat().add_bold('Bonan').add_italic(' tagon').add_bold('!')
     assert s.encode_format() == 'bold:0,5;11,12\nitalic:5,11'
+
 
 def test_expand_tld():
     s = StringWithFormat()
@@ -84,12 +90,14 @@ def test_expand_tld():
     assert s.string == 'amikeco, gepatroj'
     assert s.format == {'tld': [(0, 7), (9, 17)]}
 
+
 def test_expand_tld_start():
     s = StringWithFormat()
     s.add('a').add('b', Format.TLD)
     s = expand_tld(s)
     assert s.string == 'ab'
     assert s.format == {'tld': [(0, 2)]}
+
 
 def test_expand_tld_start2():
     s = StringWithFormat()
@@ -98,12 +106,14 @@ def test_expand_tld_start2():
     assert s.string == ',ab'
     assert s.format == {'tld': [(1, 3)]}
 
+
 def test_expand_tld_end():
     s = StringWithFormat()
     s.add('a', Format.TLD).add('b')
     s = expand_tld(s)
     assert s.string == 'ab'
     assert s.format == {'tld': [(0, 2)]}
+
 
 def test_expand_tld_end2():
     s = StringWithFormat()

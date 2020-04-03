@@ -2,9 +2,11 @@ from ..parser.revo import Art, Snc, Dif, Drv, Subart, Refgrp
 from lxml import etree
 import pytest
 
+
 @pytest.fixture
 def parser():
     return lambda xml:  etree.fromstring(xml)
+
 
 def test_set_parent(parser):
     xml = """<art>
@@ -17,6 +19,7 @@ def test_set_parent(parser):
     for tag in art.children:
         assert tag.parent == art
 
+
 def test_article_kap(parser):
     xml = """<art>
         <kap>
@@ -25,6 +28,7 @@ def test_article_kap(parser):
         </kap>
     </art>"""
     assert Art(parser(xml)).kap == ('aĉ', '/')
+
 
 def test_article_no_drv(parser):
     xml = """<art>
@@ -43,17 +47,21 @@ def test_article_no_drv(parser):
     assert parsed.string == 'Prefikso kun la senco al: \nalveni, alkuri alporti, alesti.'
     assert parsed.format == {'ekz': [(27, 58)], 'tld': [(27, 29), (35, 37), (42, 44), (51, 53)]}
 
+
 def test_drv_multiple_kap(parser):
     xml = """<drv mrk="ajn.sen0a"><kap>sen <tld/>a, <var><kap>sen ia <tld/></kap></var></kap></drv>"""
     assert Drv(parser(xml), {'radix': 'ajn'}).kap == 'sen ajna, sen ia ajn'
+
 
 def test_drv_kap(parser):
     xml = '<drv mrk="a1.0.volvita"><kap><tld/> volvita</kap></drv>'
     assert Drv(parser(xml), {'radix': 'a'}).kap == 'a volvita'
 
+
 def test_drv_main_word_multiple(parser):
     xml = '<drv mrk="abort.0ajxo"><kap><tld/>aĵo, <var><kap><tld/>ulo</kap></var></kap></drv>'
     assert Drv(parser(xml), {'radix': 'abort'}).main_word() == 'abortaĵo, abortulo'
+
 
 def test_drv_whitespace_after_gra_and_ref(parser):
     xml = """<drv mrk="abol.0i">
@@ -67,7 +75,9 @@ def test_drv_whitespace_after_gra_and_ref(parser):
             </ekz>
         </snc>
     </drv>"""
-    assert Drv(parser(xml), {'radix': 'abol'}).to_text().string == '(tr) JUR = abolicii \nsklaveco estis abolita en Brazilo en 1888. '
+    assert Drv(parser(xml), {'radix': 'abol'}).to_text().string == \
+        '(tr) JUR = abolicii \nsklaveco estis abolita en Brazilo en 1888. '
+
 
 def test_subdrv(parser):
     xml = """<drv mrk="ad.0">
@@ -79,7 +89,9 @@ def test_subdrv(parser):
             </dif>
         </subdrv>
     </drv>"""
-    assert Drv(parser(xml), {'radix': 'ad'}).to_text().string == "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn: "
+    assert Drv(parser(xml), {'radix': 'ad'}).to_text().string == \
+        "Sufikso esprimanta ĝenerale la agon kaj uzata por derivi:\n\nA. substantivojn: "
+
 
 def test_subdrv_snc(parser):
     xml = """<drv mrk="ir.0ado">
@@ -94,7 +106,9 @@ def test_subdrv_snc(parser):
         <subdrv><dif>Maniero (...)</dif></subdrv>
     </drv>
     """
-    assert Drv(parser(xml), {'radix': 'ir'}).to_text().string == "A. Ago iri: \n\n1. \nFrazo\n\n2. \nAlia frazo\n\nB. Maniero (...)"
+    assert Drv(parser(xml), {'radix': 'ir'}).to_text().string == \
+        "A. Ago iri: \n\n1. \nFrazo\n\n2. \nAlia frazo\n\nB. Maniero (...)"
+
 
 def test_snc_single(parser):
     xml = """<snc mrk="abak.0o.ARKI">
@@ -122,17 +136,20 @@ def test_snc_ignore_trd(parser):
     assert tag.string == 'Difino \nFrazo.'
     assert tag.format == {'ekz': [(8, 14)]}
 
+
 def test_snc_replace_tld(parser):
     xml = """<snc mrk="abat.0o">
     <dif>Monaĥejestro de <tld/>ejo.</dif>
     </snc>"""
     assert Snc(parser(xml), {"radix": "abat"}).to_text().string == 'Monaĥejestro de abatejo.'
 
+
 def test_snc_replace_tld_lit(parser):
     xml = """<snc mrk="abat.0o">
     <dif>Monaĥejestro de <tld lit="A"/>ejo.</dif>
     </snc>"""
     assert Snc(parser(xml), {"radix": "abat"}).to_text().string == 'Monaĥejestro de Abatejo.'
+
 
 def test_snc_whitespace(parser):
     xml = """<snc>
@@ -148,6 +165,7 @@ def test_snc_whitespace(parser):
     """
     assert Snc(parser(xml), {"radix": "kar"}).to_text().string == 'Amata: \nkara patrino; \nnia karmemora majstro '
 
+
 def test_snc_no_more_whitespace_after_ref(parser):
     xml = """<snc>
         <dif>
@@ -159,6 +177,7 @@ def test_snc_no_more_whitespace_after_ref(parser):
     </snc>"""
     assert Snc(parser(xml), {"radix": "hunded"}).to_text().string == 'Familio el la ordo rabobestoj (Canidae). '
 
+
 def test_subsnc(parser):
     xml = '''<snc mrk="-">
         <dif>Uzata kiel:</dif>
@@ -166,6 +185,7 @@ def test_subsnc(parser):
         <subsnc><dif>B</dif></subsnc>
     </snc>'''
     assert Snc(parser(xml)).to_text().string == "Uzata kiel:\n\na) A\n\nb) B"
+
 
 def test_multiple_snc(parser):
     xml = '''<art>
@@ -180,12 +200,14 @@ def test_multiple_snc(parser):
     drvs = [d.to_text().string for d in Art(parser(xml)).derivations()]
     assert drvs == ["1. A\n\n2. B"]
 
+
 def test_dif_space_between_elements(parser):
     xml = '''<dif>
             <ref tip="dif" cel="fin.0ajxo.GRA">Finaĵo</ref>
             (lingvoscience: sufikso)
         </dif>'''
     assert Dif(parser(xml)).to_text().string == "Finaĵo (lingvoscience: sufikso) "
+
 
 def test_trd_inside_ekz(parser):
     xml = '''<art>
@@ -220,6 +242,7 @@ def test_trd_inside_ekz(parser):
         #     'es': ['abstemio']},
     }
 
+
 def test_trd_preserves_whitespace(parser):
     # pl words come from abdiki
     xml = """<drv mrk="telefo.posx0o">
@@ -240,6 +263,7 @@ def test_trd_preserves_whitespace(parser):
             'pl': {None: ['dać dymisję']},
         }
     }
+
 
 def test_trd_inside_snc(parser):
     xml = """<drv mrk="brik.0o">
@@ -263,6 +287,7 @@ def test_trd_inside_snc(parser):
         }
     }
 
+
 def test_trd_inside_only_snc(parser):
     xml = """<drv mrk="cxili.CX0o">
         <kap><tld/>o</kap>
@@ -272,6 +297,7 @@ def test_trd_inside_only_snc(parser):
     assert drv.translations() == {
         'ĉilio': {'da': {None: ['Chile']}}
     }
+
 
 def test_trd_multiple_kap(parser):
     xml = """<drv mrk="arab.SaudaA0ujo">
@@ -287,6 +313,7 @@ def test_trd_multiple_kap(parser):
             'pl': {None: ['Arabia Saudyjska']}
         }
     }
+
 
 def test_refgrp_arrow(parser):
     xml = """<refgrp tip="sin">

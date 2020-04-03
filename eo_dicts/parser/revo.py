@@ -6,7 +6,7 @@ from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
 from typing import (
     Union, List, Tuple, Dict, Iterator, Optional, Type,
-    TypeVar, cast, overload)
+    TypeVar, cast)
 
 
 T = TypeVar('T', bound='Node')
@@ -18,8 +18,9 @@ def remove_extra_whitespace(string: str) -> str:
     if string and string[-1] == ' ':
         cleaned += ' '
     if string and string[0] == ' ':
-        cleaned = ' ' +  cleaned
+        cleaned = ' ' + cleaned
     return cleaned
+
 
 class Node:
     def __init__(self, node: ET.Element, extra_info=None):
@@ -164,7 +165,7 @@ class TextNode(Node):
                 content += part
             # print(self.children, "\n", parts, "\n")
             return content.apply_format(self.base_format)
-        except:
+        except Exception:
             print(self.children)
             print(parts)
             raise
@@ -217,6 +218,7 @@ class Vspec(TextNode):
     def to_text(self) -> StringWithFormat:
         return StringWithFormat("(").add(super().to_text()).add(")")
 
+
 class Ofc(TextNode):
     def to_text(self) -> StringWithFormat:
         return StringWithFormat('')
@@ -249,6 +251,7 @@ class Subart(TextNode):
         if not drvs and list(self.get(Snc)):
             yield self
 
+
 class Drv(Node):
     def __init__(self, node: ET.Element, extra_info=None):
         self.mrk = node.get('mrk') or ''
@@ -261,8 +264,19 @@ class Drv(Node):
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
 
-    def to_text(self) -> StringWithFormat:
+    def read_snc(self) -> List[StringWithFormat]:
         meanings = []
+        n_sncs = len(list(self.get(Snc)))
+        for n, snc in enumerate(self.get(Snc)):
+            if n_sncs > 1:
+                text = StringWithFormat("%s. " % (n+1,))
+                text += snc.to_text()
+            else:
+                text = snc.to_text()
+            meanings.append(text)
+        return meanings
+
+    def to_text(self) -> StringWithFormat:
         content = StringWithFormat()
 
         # Kap and Fnt ignored
@@ -273,14 +287,7 @@ class Drv(Node):
             if isinstance(node, Gra):
                 content += ' '
 
-        n_sncs = len(list(self.get(Snc)))
-        for n, snc in enumerate(self.get(Snc)):
-            if n_sncs > 1:
-                text = StringWithFormat("%s. " % (n+1,))
-                text += snc.to_text()
-            else:
-                text = snc.to_text()
-            meanings.append(text)
+        meanings = self.read_snc()
 
         for nn, subdrv in letter_enumerate(self.get(Subdrv)):
             text = subdrv.to_text()
@@ -302,6 +309,7 @@ class Drv(Node):
                 content += node2.to_text()
 
         return content
+
 
 class Subdrv(Node):
     def __init__(self, node: ET.Element, extra_info=None):
@@ -331,13 +339,14 @@ class Subdrv(Node):
             content += text_node.to_text()
         return content
 
+
 class Snc(Node):
     def __init__(self, node, extra_info=None):
         self.mrk = node.get('mrk')
         if not extra_info:
             extra_info = {}
         # example: snc without mrk but drv has it (see zoni in zon.xml)
-        mrk = self.mrk or extra_info['radix']
+        self.mrk = self.mrk or extra_info['radix']
         super().__init__(node, extra_info)
 
     def to_text(self) -> StringWithFormat:
@@ -371,6 +380,7 @@ class Snc(Node):
                 content += node2.to_text()
 
         return content
+
 
 class Subsnc(TextNode):
     def __init__(self, node: ET.Element, extra_info=None):
@@ -522,6 +532,7 @@ class Tld(Node):
             content = content.apply_format(Format.TLD)
         return content
 
+
 # found in amik.xml
 class Klr(TextNode):
     pass
@@ -549,6 +560,7 @@ class Aut(TextNode):
 class Fnt(Node):
     def to_text(self) -> StringWithFormat:
         return StringWithFormat('')
+
 
 # found in zon.xml
 class Frm(TextNode):
@@ -645,6 +657,7 @@ def main(word):
     print(art)
     print()
     print(art.to_text())
+
 
 if __name__ == '__main__':
     main()

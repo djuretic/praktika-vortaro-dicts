@@ -1,5 +1,6 @@
 from ..utils import add_hats
 
+
 def test_add_hats():
     assert add_hats('') == ''
     assert add_hats('saluton') == 'saluton'

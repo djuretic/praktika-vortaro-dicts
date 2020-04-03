@@ -52,6 +52,7 @@ def test_process_subart(runner):
         ('ano', 'an.0o', 2)
     ]
 
+
 def test_process_subart_2(runner):
     result = runner.invoke(main, ['--output-db', TEST_DB, '--xml-file', '/src/revo/xml/al.xml'])
     assert result.exit_code == 0

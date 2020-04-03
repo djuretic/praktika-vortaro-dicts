@@ -3,6 +3,7 @@ import click
 import os
 from utils import output_dir
 
+
 @click.command()
 @click.option('--word')
 def search(word: str) -> None:
@@ -12,11 +13,11 @@ def search(word: str) -> None:
     cursor = conn.cursor()
     try:
         for row in cursor.execute("""
-            SELECT *
-            FROM words w
-            LEFT JOIN definitions d ON (w.definition_id = d.id)
-            WHERE word = ?
-            """, (word,)):
+                SELECT *
+                FROM words w
+                LEFT JOIN definitions d ON (w.definition_id = d.id)
+                WHERE word = ?
+                """, (word,)):
             for field, value in dict(row).items():
                 print("%s: %s" % (field, repr(value)))
     finally:

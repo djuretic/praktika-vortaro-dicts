@@ -1,13 +1,11 @@
-import re
 import os
 import sqlite3
 import glob
 import itertools
-from lxml import etree
 import click
-from typing import List, Dict, Any, TypedDict, Optional
+from typing import List, Dict, TypedDict, Optional
 
-from .utils import add_hats, list_languages, get_languages, get_disciplines, output_dir
+from .utils import list_languages, get_languages, get_disciplines, output_dir
 from .parser import revo
 from .parser.string_with_format import expand_tld
 
@@ -53,7 +51,7 @@ def create_db(output_db: str) -> sqlite3.Connection:
     db_filename = os.path.join(base_dir, output_db)
     try:
         os.remove(db_filename)
-    except:
+    except Exception:
         pass
     conn = sqlite3.connect(db_filename)
     c = conn.cursor()
@@ -78,6 +76,7 @@ def create_db(output_db: str) -> sqlite3.Connection:
     """)
 
     return conn
+
 
 def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: Dict) -> None:
     cursor.execute("""
@@ -112,6 +111,7 @@ def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: Dict) -> None:
             VALUES (?, ?, ?)
         """, (lang, lang_names[lang][1], entries_per_lang[lang]))
 
+
 def create_disciplines_tables(cursor: sqlite3.Cursor) -> None:
     cursor.execute("""
         CREATE TABLE disciplines (
@@ -131,7 +131,7 @@ def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbo
     art = None
     try:
         art = revo.parse_article(filename)
-    except:
+    except Exception:
         print('Error parsing %s' % filename)
         raise
 
@@ -156,9 +156,11 @@ def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbo
         assert 'StringWithFormat' not in content.string
 
         # definition_id will be used to check whether the definition is already in the database
-        definition: DefinitionDict = dict(article_id=num_article, word=main_word_txt, mark=drv.mrk,
+        definition: DefinitionDict = dict(
+            article_id=num_article, word=main_word_txt, mark=drv.mrk,
             definition=content.string, format=content.encode_format(),
-            trads=drv.translations(), position=pos, definition_id=None)
+            trads=drv.translations(), position=pos, definition_id=None
+        )
         # note that before inserting the entries will be sorted by 'word'
         first_word = True
         for word in main_word_txt.split(', '):
@@ -215,7 +217,7 @@ def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries
                 for lng, trans_data in more_trads.items():
                     translations.append(dict(row_id=def_id, word=word, lng=lng, data=trans_data))
 
-    translations = sorted(translations, key= lambda x: x['lng'])
+    translations = sorted(translations, key=lambda x: x['lng'])
     entries_per_lang = {}
     for lng, g in itertools.groupby(translations, key=lambda x: x['lng']):
         count = len(list(g))
@@ -226,7 +228,6 @@ def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries
     create_langs_tables(cursor, entries_per_lang)
     translations = [t for t in translations if t['lng'] in entries_per_lang]
     insert_translations(translations, cursor)
-
 
 
 @click.command()

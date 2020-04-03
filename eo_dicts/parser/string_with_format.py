@@ -41,7 +41,7 @@ class StringWithFormat:
                     self.format[fmt] = []
 
                 if self.format[fmt] and self.format[fmt][-1][-1] == n and \
-                    fmt_list and fmt_list[0][0] == 0:
+                        fmt_list and fmt_list[0][0] == 0:
                     # merge two formats in one
                     self.format[fmt][-1] = (self.format[fmt][-1][0], n + fmt_list[0][1])
                     fmt_list = fmt_list[1:]
@@ -91,7 +91,7 @@ class StringWithFormat:
         new_string = original.rstrip()
         if len(new_string) != base_len:
             for key in new_format:
-                new_format[key] = [ (a, min(len(new_string), b)) for (a,b) in new_format[key]]
+                new_format[key] = [(a, min(len(new_string), b)) for (a, b) in new_format[key]]
 
         base_len = len(new_string)
         new_string = new_string.lstrip()
@@ -100,7 +100,7 @@ class StringWithFormat:
             for key in new_format:
                 new_format[key] = [
                     (max(0, a - dif), max(0, b - dif))
-                    for (a,b) in new_format[key]]
+                    for (a, b) in new_format[key]]
 
         new_string_format = StringWithFormat(new_string)
         new_string_format.format = new_format
@@ -123,7 +123,6 @@ class StringWithFormat:
 
     def __len__(self) -> int:
         return len(self.string)
-
 
 
 def expand_tld(string):
