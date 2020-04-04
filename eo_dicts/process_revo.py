@@ -128,6 +128,16 @@ def create_disciplines_tables(cursor: sqlite3.Cursor) -> None:
             (code, discipline))
 
 
+def create_version_table(cursor: sqlite3.Cursor) -> None:
+    base_dir = os.path.dirname(__file__)
+    version = ''
+    with open(os.path.join(base_dir, '..', 'revo', 'VERSION'), 'r') as f:
+        version = f.read().strip()
+
+    cursor.execute("CREATE TABLE version (id text primary key)")
+    cursor.execute("INSERT INTO version (id) values (?)", (version,))
+
+
 def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False) -> List[EntryDict]:
     art = None
     try:
@@ -288,6 +298,7 @@ def main(
         if not dry_run:
             insert_entries(entries, cursor, min_entries_to_include_lang)
             create_index(cursor)
+            create_version_table(cursor)
     finally:
         if not dry_run:
             conn.commit()
