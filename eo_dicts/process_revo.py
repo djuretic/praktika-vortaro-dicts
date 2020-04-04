@@ -3,6 +3,7 @@ import sqlite3
 import glob
 import itertools
 import click
+import json
 from typing import List, Dict, TypedDict, Optional
 
 from .utils import list_languages, get_languages, get_disciplines, output_dir
@@ -187,6 +188,12 @@ def create_index(cursor: sqlite3.Cursor) -> None:
     cursor.execute("CREATE INDEX index_definition_id_words ON words (definition_id)")
 
 
+def write_stats(entries_per_lang: Dict) -> None:
+    base_dir = os.path.dirname(__file__)
+    with open(os.path.join(base_dir, '..', 'stats.json'), 'w') as f:
+        json.dump(entries_per_lang, f, ensure_ascii=False, indent=4)
+
+
 def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int) -> None:
     entries = sorted(entries, key=lambda x: x['word'].lower())
     translations = []
@@ -224,6 +231,8 @@ def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries
         if count >= min_entries_to_include_lang:
             print(lng, count)
             entries_per_lang[lng] = count
+
+    write_stats(entries_per_lang)
 
     create_langs_tables(cursor, entries_per_lang)
     translations = [t for t in translations if t['lng'] in entries_per_lang]

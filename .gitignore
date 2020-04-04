@@ -4,6 +4,7 @@
 *.xml
 *.pyc
 *.egg-info
+*.json
 __pycache__
 .cache
 .mypy_cache
