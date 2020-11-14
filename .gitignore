@@ -5,6 +5,7 @@
 *.pyc
 *.egg-info
 *.json
+!pmeg_index.json
 __pycache__
 .cache
 .mypy_cache
