@@ -9,6 +9,7 @@ from typing import List, Dict, TypedDict, Optional
 from .utils import list_languages, get_languages, get_disciplines, output_dir
 from .parser import revo
 from .parser.string_with_format import expand_tld
+from .process_pmeg import PmegLink
 
 
 class DefinitionDict(TypedDict):
@@ -73,6 +74,16 @@ def create_db(output_db: str) -> sqlite3.Connection:
             position integer,
             definition text,
             format text
+        )
+    """)
+    c.execute("""
+        CREATE TABLE pmeg_entries (
+            id integer primary key,
+            word text,
+            category text,
+            title text,
+            link text,
+            definition_id integer
         )
     """)
 
@@ -196,6 +207,7 @@ def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbo
 def create_index(cursor: sqlite3.Cursor) -> None:
     cursor.execute("CREATE INDEX index_word_words ON words (word)")
     cursor.execute("CREATE INDEX index_definition_id_words ON words (definition_id)")
+    cursor.execute("CREATE INDEX index_definition_id_pmeg_entries ON pmeg_entries (definition_id)")
 
 
 def write_stats(entries_per_lang: Dict) -> None:
@@ -249,6 +261,31 @@ def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries
     insert_translations(translations, cursor)
 
 
+def insert_pmeg_entries(entries: List[EntryDict], cursor: sqlite3.Cursor) -> None:
+    pmeg_file = os.path.join(os.path.dirname(__file__), '..', 'pmeg', 'pmeg_index.json')
+    pmeg_data: Dict[str, List[PmegLink]] = {}
+    with open(pmeg_file) as file:
+        pmeg_data = json.load(file)
+
+    found = 0
+    print('PMEG...')
+    for entry in entries:
+        if entry['word'] not in pmeg_data:
+            continue
+        found += 1
+
+        for pmeg_entry in pmeg_data[entry['word']]:
+            assert pmeg_entry
+            cursor.execute("""INSERT INTO pmeg_entries
+                    (word, category, title, link, definition_id)
+                    values (?, ?, ?, ?, ?)
+                """, (
+                    entry['word'], pmeg_entry[0], pmeg_entry[1], pmeg_entry[2], entry['definition']['definition_id']
+                )
+            )
+    print(found)
+
+
 @click.command()
 @click.option('--word')
 @click.option('--xml-file')
@@ -297,6 +334,7 @@ def main(
 
         if not dry_run:
             insert_entries(entries, cursor, min_entries_to_include_lang)
+            insert_pmeg_entries(entries, cursor)
             create_index(cursor)
             create_version_table(cursor)
     finally:

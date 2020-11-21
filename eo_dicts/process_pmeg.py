@@ -22,9 +22,9 @@ def parse_index_entry(tag) -> Tuple[str, List[PmegLink]]:
             if ul_class == "chefligoj":
                 for li in child.xpath(".//li"):
                     text = etree.tostring(li, method="text", encoding="utf-8").decode("utf-8").strip()
-                    link = list(li.iter("a"))[0].get('href')
+                    link: str = list(li.iter("a"))[0].get('href')
                     # print(link, text)
-                    links.append((None, text, link))
+                    links.append((None, text, link.replace('..', '')))
             elif ul_class == "subvortoj":
                 for li in child.xpath("./li"):
                     assert li.get('class') == 'subvorto'
@@ -33,8 +33,8 @@ def parse_index_entry(tag) -> Tuple[str, List[PmegLink]]:
                     print(headword, len(list(li.iter('li'))))
                     for inner_li in li.xpath('./ul/li'):
                         text = etree.tostring(inner_li, method="text", encoding="utf-8").decode("utf-8").strip()
-                        link = list(inner_li.iter("a"))[0].get('href')
-                        links.append((category, text, link))
+                        link: str = list(inner_li.iter("a"))[0].get('href')
+                        links.append((category, text, link.replace('..', '')))
             else:
                 raise
 
