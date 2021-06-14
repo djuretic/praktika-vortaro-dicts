@@ -62,8 +62,7 @@ def test_process_subart_2(runner):
     res = cursor.execute("SELECT word, definition_id from words")
     assert list(res) == [
         ('al', 1),
-        ('alaĵo', 2),
-        ('aligi', 3),
-        ('aliĝi', 4),
-        ('aliĝilo', 5),
+        ('aligi', 2),
+        ('aliĝi', 3),
+        ('aliĝilo', 4),
     ]
