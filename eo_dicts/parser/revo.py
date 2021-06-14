@@ -613,6 +613,10 @@ class Nac(TextNode):
     pass
 
 
+class Baz(TextNode):
+    pass
+
+
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict() -> Dict[str, str]:
     entities: Dict[str, str] = {}
