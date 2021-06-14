@@ -13,3 +13,4 @@ wget -O revo/dtd/vokourl.dtd https://raw.githubusercontent.com/revuloj/voko-grun
 wget -O revo/dtd/vokosgn.dtd https://raw.githubusercontent.com/revuloj/voko-grundo/master/dtd/vokosgn.dtd
 wget -O revo/cfg/lingvoj.xml https://raw.githubusercontent.com/revuloj/voko-grundo/master/cfg/lingvoj.xml
 wget -O revo/cfg/fakoj.xml https://raw.githubusercontent.com/revuloj/voko-grundo/master/cfg/fakoj.xml
+date +%F > revo/VERSION
