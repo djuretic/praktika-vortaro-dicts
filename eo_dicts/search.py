@@ -1,11 +1,13 @@
 import sqlite3
-import click
 import os
+import fire
+from typing import List
 from utils import output_dir
 
+def search_multiple(*words: List[str]) -> None:
+    for word in words:
+        search(word)
 
-@click.command()
-@click.option('--word')
 def search(word: str) -> None:
     db_filename = os.path.join(output_dir(), 'vortaro.db')
     conn = sqlite3.connect(db_filename)
@@ -20,10 +22,11 @@ def search(word: str) -> None:
                 """, (word,)):
             for field, value in dict(row).items():
                 print("%s: %s" % (field, repr(value)))
+            print("")
     finally:
         cursor.close()
         conn.close()
 
 
 if __name__ == '__main__':
-    search()
+    fire.Fire(search_multiple)
