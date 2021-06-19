@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+click = "*"
+fire = "*"
+lxml = "*"
+typing = "*"
+eo-dicts = {editable = true, path = "."}
+
+[dev-packages]
+black = "==21.6b0"
+ipython = "*"
+pytest = "*"
+
+[requires]
+python_version = "3.9"

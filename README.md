@@ -6,7 +6,8 @@ Install the dependencies, download the dictionary files and process them:
 
 ```bash
 git submodule init && git submodule update
-pip install -r requirements.txt
+pip install pipfile
+pipfile install
 process_revo
 ```
 
