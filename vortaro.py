@@ -1,7 +1,7 @@
 import fire
 from eo_dicts import process_revo
 from eo_dicts.utils import list_languages
-from eo_dicts.search import search_multiple
+from eo_dicts.search import search_multiple, stats
 
 
 class Vortaro(object):
@@ -10,6 +10,9 @@ class Vortaro(object):
 
     def search(self, *words: str):
         search_multiple(*words)
+
+    def stats(self):
+        stats()
 
     def process_revo(
         self,
