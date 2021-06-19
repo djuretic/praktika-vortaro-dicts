@@ -1,7 +1,6 @@
 import sqlite3
 import os
-import fire
-from utils import output_dir
+from .utils import output_dir
 
 
 def search_multiple(*words: str) -> None:
@@ -30,7 +29,3 @@ def search(word: str) -> None:
     finally:
         cursor.close()
         conn.close()
-
-
-if __name__ == "__main__":
-    fire.Fire(search_multiple)

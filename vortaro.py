@@ -1,11 +1,15 @@
 import fire
 from eo_dicts import process_revo
 from eo_dicts.utils import list_languages
+from eo_dicts.search import search_multiple
 
 
 class Vortaro(object):
     def show_languages(self):
         list_languages()
+
+    def search(self, *words: str):
+        search_multiple(*words)
 
     def process_revo(
         self,
