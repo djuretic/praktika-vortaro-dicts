@@ -2,11 +2,10 @@ import os
 import sqlite3
 import glob
 import itertools
-import click
 import json
 from typing import List, Dict, TypedDict, Optional
 
-from .utils import list_languages, get_languages, get_disciplines, output_dir
+from .utils import get_languages, get_disciplines, output_dir
 from .parser import revo
 from .parser.string_with_format import expand_tld
 
@@ -300,28 +299,15 @@ def insert_entries(
     insert_translations(translations, cursor)
 
 
-@click.command()
-@click.option("--word")
-@click.option("--xml-file")
-@click.option("--output-db", default="vortaro.db")
-@click.option("--limit", type=int)
-@click.option("--verbose", is_flag=True)
-@click.option("--dry-run", is_flag=True)
-@click.option("--show-languages", is_flag=True)
-@click.option("--min-entries-to-include-lang", type=int, default=100)
 def main(
-    word: str,
-    xml_file: str,
+    word: Optional[str],
+    xml_file: Optional[str],
     output_db: str,
-    limit: int,
+    limit: Optional[int],
     verbose: bool,
     dry_run: bool,
-    show_languages: bool,
     min_entries_to_include_lang: int,
 ) -> None:
-    if show_languages:
-        list_languages()
-        return
 
     conn = create_db(os.path.join(output_dir(), output_db))
     cursor = conn.cursor()
@@ -360,8 +346,3 @@ def main(
             conn.commit()
         cursor.close()
         conn.close()
-
-
-if __name__ == "__main__":
-    # pylint: disable=no-value-for-parameter
-    main()

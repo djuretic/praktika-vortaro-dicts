@@ -1,5 +1,5 @@
 import os.path
-import click
+import fire
 import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
@@ -664,9 +664,7 @@ def parse_article(filename: str) -> Art:
     return Art(art)
 
 
-@click.command()
-@click.argument("word")
-def main(word):
+def main(word: str):
     art = parse_article("xml/%s.xml" % word)
     print(art)
     print()
@@ -674,4 +672,4 @@ def main(word):
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(main)

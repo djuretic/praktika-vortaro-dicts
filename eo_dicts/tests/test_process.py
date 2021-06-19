@@ -1,11 +1,8 @@
-import sys
 import os
-import functools
 import sqlite3
-from click.testing import CliRunner
 import pytest
-from ..process_revo import main
 from ..utils import output_dir
+from vortaro import Vortaro
 
 TEST_DB = "test.db"
 XML_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "revo", "xml")
@@ -13,40 +10,18 @@ XML_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "revo", "xml"
 
 # source: https://github.com/pallets/click/issues/737#issuecomment-309231467
 @pytest.fixture
-def runner():
-    """Yield a click.testing.CliRunner to invoke the CLI."""
-    class_ = CliRunner
-
-    def invoke_wrapper(f):
-        """Augment CliRunner.invoke to emit its output to stdout.
-
-        This enables pytest to show the output in its logs on test
-        failures.
-        """
-
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            result = f(*args, **kwargs)
-            sys.stdout.write(result.output)
-            return result
-
-        return wrapper
-
-    class_.invoke = invoke_wrapper(class_.invoke)
-    cli_runner = class_()
-    yield cli_runner
+def vortaro():
+    return Vortaro()
 
 
 def db_file():
     return os.path.join(output_dir(), TEST_DB)
 
 
-def test_process_subart(runner):
-    result = runner.invoke(
-        main,
-        ["--output-db", TEST_DB, "--xml-file", os.path.join(XML_BASE_DIR, "an.xml")],
+def test_process_subart(vortaro):
+    vortaro.process_revo(
+        output_db=TEST_DB, xml_file=os.path.join(XML_BASE_DIR, "an.xml")
     )
-    assert result.exit_code == 0
 
     conn = sqlite3.connect(db_file())
     cursor = conn.cursor()
@@ -59,12 +34,10 @@ def test_process_subart(runner):
     ]
 
 
-def test_process_subart_2(runner):
-    result = runner.invoke(
-        main,
-        ["--output-db", TEST_DB, "--xml-file", os.path.join(XML_BASE_DIR, "al.xml")],
+def test_process_subart_2(vortaro):
+    vortaro.process_revo(
+        output_db=TEST_DB, xml_file=os.path.join(XML_BASE_DIR, "al.xml")
     )
-    assert result.exit_code == 0
 
     conn = sqlite3.connect(db_file())
     cursor = conn.cursor()
