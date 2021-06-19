@@ -8,6 +8,7 @@ from ..process_revo import main
 from ..utils import output_dir
 
 TEST_DB = "test.db"
+XML_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "revo", "xml")
 
 
 # source: https://github.com/pallets/click/issues/737#issuecomment-309231467
@@ -42,7 +43,8 @@ def db_file():
 
 def test_process_subart(runner):
     result = runner.invoke(
-        main, ["--output-db", TEST_DB, "--xml-file", "/src/revo/xml/an.xml"]
+        main,
+        ["--output-db", TEST_DB, "--xml-file", os.path.join(XML_BASE_DIR, "an.xml")],
     )
     assert result.exit_code == 0
 
@@ -59,7 +61,8 @@ def test_process_subart(runner):
 
 def test_process_subart_2(runner):
     result = runner.invoke(
-        main, ["--output-db", TEST_DB, "--xml-file", "/src/revo/xml/al.xml"]
+        main,
+        ["--output-db", TEST_DB, "--xml-file", os.path.join(XML_BASE_DIR, "al.xml")],
     )
     assert result.exit_code == 0
 

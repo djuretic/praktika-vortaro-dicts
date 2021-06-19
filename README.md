@@ -18,3 +18,9 @@ To download the most recent data files from Revo:
 ./download_revo.sh
 process_revo
 ```
+
+## Tests
+
+```bash
+pytest
+```
