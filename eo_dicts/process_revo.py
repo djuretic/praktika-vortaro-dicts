@@ -32,18 +32,34 @@ def insert_translations(trads: List[Dict], cursor: sqlite3.Cursor) -> None:
     # flatten
     all_trans: List[Dict] = []
     for translation in trads:
-        for snc_index, words in translation['data'].items():
+        for snc_index, words in translation["data"].items():
             for word in words:
-                all_trans.append(dict(translation=word, snc_index=snc_index, **translation))
+                all_trans.append(
+                    dict(translation=word, snc_index=snc_index, **translation)
+                )
 
-    all_trans.sort(key=lambda x: (x['lng'], x['translation'], x['snc_index'] is None, x['snc_index']))
+    all_trans.sort(
+        key=lambda x: (
+            x["lng"],
+            x["translation"],
+            x["snc_index"] is None,
+            x["snc_index"],
+        )
+    )
 
     for translation in all_trans:
         cursor.execute(
             """INSERT INTO translations_{code}
             (definition_id, snc_index, word, translation)
-            VALUES (?,?,?,?)""".format(code=translation['lng']),
-            (translation['row_id'], translation['snc_index'], translation['word'], translation['translation'])
+            VALUES (?,?,?,?)""".format(
+                code=translation["lng"]
+            ),
+            (
+                translation["row_id"],
+                translation["snc_index"],
+                translation["word"],
+                translation["translation"],
+            ),
         )
 
 
@@ -56,15 +72,18 @@ def create_db(output_db: str) -> sqlite3.Connection:
         pass
     conn = sqlite3.connect(db_filename)
     c = conn.cursor()
-    c.execute("""
+    c.execute(
+        """
         CREATE TABLE words (
             id integer primary key,
             word text,
             definition_id integer
         )
-    """)
+    """
+    )
     # position: relative order inside the article
-    c.execute("""
+    c.execute(
+        """
         CREATE TABLE definitions (
             id integer primary key,
             article_id integer,
@@ -74,30 +93,35 @@ def create_db(output_db: str) -> sqlite3.Connection:
             definition text,
             format text
         )
-    """)
+    """
+    )
 
     return conn
 
 
 def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: Dict) -> None:
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE languages (
             id integer primary key,
             code text,
             name text,
             num_entries integer
         )
-    """)
+    """
+    )
 
     lang_names = {
-        lang_def['code']: (order, lang_def['name'])
-        for order, lang_def in enumerate(get_languages())}
+        lang_def["code"]: (order, lang_def["name"])
+        for order, lang_def in enumerate(get_languages())
+    }
     # Normal sort won't consider ĉ, ŝ, ...,
     # get_languages() gives the correct order
     langs = sorted(entries_per_lang.keys(), key=lambda x: lang_names[x][0])
 
     for lang in langs:
-        cursor.execute("""
+        cursor.execute(
+            """
         CREATE TABLE translations_{lang} (
             id integer primary key,
             definition_id integer,
@@ -105,45 +129,55 @@ def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: Dict) -> None:
             word text,
             translation text
         )
-        """.format(lang=lang))
+        """.format(
+                lang=lang
+            )
+        )
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO languages (code, name, num_entries)
             VALUES (?, ?, ?)
-        """, (lang, lang_names[lang][1], entries_per_lang[lang]))
+        """,
+            (lang, lang_names[lang][1], entries_per_lang[lang]),
+        )
 
 
 def create_disciplines_tables(cursor: sqlite3.Cursor) -> None:
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE disciplines (
             id integer primary key,
             code text,
             name text
         )
-    """)
+    """
+    )
 
     for code, discipline in get_disciplines().items():
         cursor.execute(
-            "INSERT INTO disciplines (code, name) VALUES (?, ?)",
-            (code, discipline))
+            "INSERT INTO disciplines (code, name) VALUES (?, ?)", (code, discipline)
+        )
 
 
 def create_version_table(cursor: sqlite3.Cursor) -> None:
     base_dir = os.path.dirname(__file__)
-    version = ''
-    with open(os.path.join(base_dir, '..', 'revo', 'VERSION'), 'r') as f:
+    version = ""
+    with open(os.path.join(base_dir, "..", "revo", "VERSION"), "r") as f:
         version = f.read().strip()
 
     cursor.execute("CREATE TABLE version (id text primary key)")
     cursor.execute("INSERT INTO version (id) values (?)", (version,))
 
 
-def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False) -> List[EntryDict]:
+def parse_article(
+    filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False
+) -> List[EntryDict]:
     art = None
     try:
         art = revo.parse_article(filename)
     except Exception:
-        print('Error parsing %s' % filename)
+        print("Error parsing %s" % filename)
         raise
 
     found_words = []
@@ -164,26 +198,32 @@ def parse_article(filename: str, num_article: int, cursor: sqlite3.Cursor, verbo
         row_id = None
         content = drv.to_text()
         content = expand_tld(content)
-        assert 'StringWithFormat' not in content.string
+        assert "StringWithFormat" not in content.string
 
         # definition_id will be used to check whether the definition is already in the database
         definition: DefinitionDict = dict(
-            article_id=num_article, word=main_word_txt, mark=drv.mrk,
-            definition=content.string, format=content.encode_format(),
-            trads=drv.translations(), position=pos, definition_id=None
+            article_id=num_article,
+            word=main_word_txt,
+            mark=drv.mrk,
+            definition=content.string,
+            format=content.encode_format(),
+            trads=drv.translations(),
+            position=pos,
+            definition_id=None,
         )
         # note that before inserting the entries will be sorted by 'word'
         first_word = True
-        for word in main_word_txt.split(', '):
+        for word in main_word_txt.split(", "):
             word = word.strip()
             # "definition" dict is shared between entries in this loop
             entries.append(
-                dict(article_id=num_article, word=word, definition=definition))
+                dict(article_id=num_article, word=word, definition=definition)
+            )
             if first_word:
                 first_word = False
                 # Avoid duplication of translations
                 definition = definition.copy()
-                definition['trads'] = {}
+                definition["trads"] = {}
 
         if verbose:
             print(filename, drv.mrk, row_id)
@@ -200,43 +240,54 @@ def create_index(cursor: sqlite3.Cursor) -> None:
 
 def write_stats(entries_per_lang: Dict) -> None:
     base_dir = os.path.dirname(__file__)
-    with open(os.path.join(base_dir, '..', 'stats.json'), 'w') as f:
+    with open(os.path.join(base_dir, "..", "stats.json"), "w") as f:
         json.dump(entries_per_lang, f, ensure_ascii=False, indent=4)
 
 
-def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int) -> None:
-    entries = sorted(entries, key=lambda x: x['word'].lower())
+def insert_entries(
+    entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int
+) -> None:
+    entries = sorted(entries, key=lambda x: x["word"].lower())
     translations = []
     for entry in entries:
-        print(entry['word'])
+        print(entry["word"])
 
-        if not entry['definition']['definition_id']:
-            definition = entry['definition']
-            cursor.execute("""INSERT INTO definitions (
+        if not entry["definition"]["definition_id"]:
+            definition = entry["definition"]
+            cursor.execute(
+                """INSERT INTO definitions (
                 article_id, words, mark, position, definition, format)
-                values (?, ?, ?, ?, ?, ?)""", (
-                    definition['article_id'], definition['word'],
-                    definition['mark'], definition['position'],
-                    definition['definition'], definition['format']))
-            entry['definition']['definition_id'] = cursor.lastrowid
+                values (?, ?, ?, ?, ?, ?)""",
+                (
+                    definition["article_id"],
+                    definition["word"],
+                    definition["mark"],
+                    definition["position"],
+                    definition["definition"],
+                    definition["format"],
+                ),
+            )
+            entry["definition"]["definition_id"] = cursor.lastrowid
 
-        assert entry['definition']['definition_id'] is not None
-        def_id: int = entry['definition']['definition_id']
+        assert entry["definition"]["definition_id"] is not None
+        def_id: int = entry["definition"]["definition_id"]
 
         cursor.execute(
             "INSERT into words (word, definition_id) values (?, ?)",
-            [entry['word'], def_id]
+            [entry["word"], def_id],
         )
 
-        trads = entry['definition']['trads']
+        trads = entry["definition"]["trads"]
         if trads:
             for word, more_trads in trads.items():
                 for lng, trans_data in more_trads.items():
-                    translations.append(dict(row_id=def_id, word=word, lng=lng, data=trans_data))
+                    translations.append(
+                        dict(row_id=def_id, word=word, lng=lng, data=trans_data)
+                    )
 
-    translations = sorted(translations, key=lambda x: x['lng'])
+    translations = sorted(translations, key=lambda x: x["lng"])
     entries_per_lang = {}
-    for lng, g in itertools.groupby(translations, key=lambda x: x['lng']):
+    for lng, g in itertools.groupby(translations, key=lambda x: x["lng"]):
         count = len(list(g))
         if count >= min_entries_to_include_lang:
             print(lng, count)
@@ -245,23 +296,29 @@ def insert_entries(entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries
     write_stats(entries_per_lang)
 
     create_langs_tables(cursor, entries_per_lang)
-    translations = [t for t in translations if t['lng'] in entries_per_lang]
+    translations = [t for t in translations if t["lng"] in entries_per_lang]
     insert_translations(translations, cursor)
 
 
 @click.command()
-@click.option('--word')
-@click.option('--xml-file')
-@click.option('--output-db', default='vortaro.db')
-@click.option('--limit', type=int)
-@click.option('--verbose', is_flag=True)
-@click.option('--dry-run', is_flag=True)
-@click.option('--show-languages', is_flag=True)
-@click.option('--min-entries-to-include-lang', type=int, default=100)
+@click.option("--word")
+@click.option("--xml-file")
+@click.option("--output-db", default="vortaro.db")
+@click.option("--limit", type=int)
+@click.option("--verbose", is_flag=True)
+@click.option("--dry-run", is_flag=True)
+@click.option("--show-languages", is_flag=True)
+@click.option("--min-entries-to-include-lang", type=int, default=100)
 def main(
-        word: str, xml_file: str, output_db: str, limit: int,
-        verbose: bool, dry_run: bool, show_languages: bool,
-        min_entries_to_include_lang: int) -> None:
+    word: str,
+    xml_file: str,
+    output_db: str,
+    limit: int,
+    verbose: bool,
+    dry_run: bool,
+    show_languages: bool,
+    min_entries_to_include_lang: int,
+) -> None:
     if show_languages:
         list_languages()
         return
@@ -279,7 +336,7 @@ def main(
             files = [xml_file]
         else:
             base_dir = os.path.dirname(__file__)
-            path = os.path.join(base_dir, '..', 'revo', 'xml', '*.xml')
+            path = os.path.join(base_dir, "..", "revo", "xml", "*.xml")
             files = glob.glob(path)
         files.sort()
 
@@ -287,8 +344,7 @@ def main(
         for filename in files:
             if word and word not in filename:
                 continue
-            parsed_entries = parse_article(
-                filename, num_article, cursor, verbose)
+            parsed_entries = parse_article(filename, num_article, cursor, verbose)
             entries += parsed_entries
             num_article += 1
 
@@ -306,6 +362,6 @@ def main(
         conn.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
     main()

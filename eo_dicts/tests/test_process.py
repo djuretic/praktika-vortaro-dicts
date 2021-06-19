@@ -7,7 +7,7 @@ import pytest
 from ..process_revo import main
 from ..utils import output_dir
 
-TEST_DB = 'test.db'
+TEST_DB = "test.db"
 
 
 # source: https://github.com/pallets/click/issues/737#issuecomment-309231467
@@ -22,11 +22,13 @@ def runner():
         This enables pytest to show the output in its logs on test
         failures.
         """
+
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             result = f(*args, **kwargs)
             sys.stdout.write(result.output)
             return result
+
         return wrapper
 
     class_.invoke = invoke_wrapper(class_.invoke)
@@ -39,30 +41,34 @@ def db_file():
 
 
 def test_process_subart(runner):
-    result = runner.invoke(main, ['--output-db', TEST_DB, '--xml-file', '/src/revo/xml/an.xml'])
+    result = runner.invoke(
+        main, ["--output-db", TEST_DB, "--xml-file", "/src/revo/xml/an.xml"]
+    )
     assert result.exit_code == 0
 
     conn = sqlite3.connect(db_file())
     cursor = conn.cursor()
     res = cursor.execute("SELECT words, mark, position from definitions")
     assert list(res) == [
-        ('-an', 'an.0', 1),
-        ('anaro', 'an.0aro', 3),
-        ('aniĝi', 'an.0igxi', 4),
-        ('ano', 'an.0o', 2)
+        ("-an", "an.0", 1),
+        ("anaro", "an.0aro", 3),
+        ("aniĝi", "an.0igxi", 4),
+        ("ano", "an.0o", 2),
     ]
 
 
 def test_process_subart_2(runner):
-    result = runner.invoke(main, ['--output-db', TEST_DB, '--xml-file', '/src/revo/xml/al.xml'])
+    result = runner.invoke(
+        main, ["--output-db", TEST_DB, "--xml-file", "/src/revo/xml/al.xml"]
+    )
     assert result.exit_code == 0
 
     conn = sqlite3.connect(db_file())
     cursor = conn.cursor()
     res = cursor.execute("SELECT word, definition_id from words")
     assert list(res) == [
-        ('al', 1),
-        ('aligi', 2),
-        ('aliĝi', 3),
-        ('aliĝilo', 4),
+        ("al", 1),
+        ("aligi", 2),
+        ("aliĝi", 3),
+        ("aliĝilo", 4),
     ]

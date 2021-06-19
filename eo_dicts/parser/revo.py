@@ -4,21 +4,19 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
-from typing import (
-    Union, List, Tuple, Dict, Iterator, Optional, Type,
-    TypeVar, cast)
+from typing import Union, List, Tuple, Dict, Iterator, Optional, Type, TypeVar, cast
 
 
-T = TypeVar('T', bound='Node')
+T = TypeVar("T", bound="Node")
 
 
 def remove_extra_whitespace(string: str) -> str:
-    cleaned = ' '.join(string.split())
+    cleaned = " ".join(string.split())
     # Preserve trailing whitespace
-    if string and string[-1] == ' ':
-        cleaned += ' '
-    if string and string[0] == ' ':
-        cleaned = ' ' + cleaned
+    if string and string[-1] == " ":
+        cleaned += " "
+    if string and string[0] == " ":
+        cleaned = " " + cleaned
     return cleaned
 
 
@@ -26,46 +24,55 @@ class Node:
     def __init__(self, node: ET.Element, extra_info=None):
         if extra_info is None:
             extra_info = {}
-        self.parent: Optional['Node'] = extra_info.get('parent')
-        self.children: List[Union[str, 'Node']]
+        self.parent: Optional["Node"] = extra_info.get("parent")
+        self.children: List[Union[str, "Node"]]
         self.parse_children(node, extra_info)
         self.text = None
 
     def __repr__(self):
-        keys = ' '.join("{}={}".format(k, repr(v)) for k, v in self.__dict__.items() if k != 'parent')
+        keys = " ".join(
+            "{}={}".format(k, repr(v))
+            for k, v in self.__dict__.items()
+            if k != "parent"
+        )
         return "<%s %s>" % (self.__class__.__name__, keys)
 
-    def parse_children(self, node: ET.Element, extra_info: Dict[str, 'Node']) -> None:
+    def parse_children(self, node: ET.Element, extra_info: Dict[str, "Node"]) -> None:
         self.children = []
         if node.text and node.text.strip():
             self.children.append(remove_extra_whitespace(node.text))
         for child in node:
-            if child.tag in ['adm', 'bld', 'fnt']:
+            if child.tag in ["adm", "bld", "fnt"]:
                 if child.tail and child.tail.strip():
                     self.children.append(remove_extra_whitespace(child.tail))
                 continue
             tag_class = globals()[child.tag.title()]
-            extra_info['parent'] = self
+            extra_info["parent"] = self
             self.children.append(tag_class(child, extra_info))
             if child.tail and child.tail.strip():
                 self.children.append(remove_extra_whitespace(child.tail))
         self.children = self.add_whitespace_nodes_to_children()
         # print(node.tag, '- children:', self.children)
 
-    def add_whitespace_nodes_to_children(self) -> List[Union[str, 'Node']]:
+    def add_whitespace_nodes_to_children(self) -> List[Union[str, "Node"]]:
         children = []
         for n, child in enumerate(self.children):
             children.append(child)
             if isinstance(child, Ref) and n < len(self.children) - 1:
-                next_node = self.children[n+1]
+                next_node = self.children[n + 1]
                 # print("DETECTED ref, next:", next_node, next_node.__class__)
                 if isinstance(next_node, str) and next_node[0] not in ". ,;:":
-                    children.append(' ')
+                    children.append(" ")
                 elif not isinstance(next_node, str):
-                    children.append(' ')
-            elif isinstance(child, Klr) and n < len(self.children) - 1 and child.children:
-                if isinstance(child.children[-1], str) and child.children[-1][-1] != ' ':
-                    children.append(' ')
+                    children.append(" ")
+            elif (
+                isinstance(child, Klr) and n < len(self.children) - 1 and child.children
+            ):
+                if (
+                    isinstance(child.children[-1], str)
+                    and child.children[-1][-1] != " "
+                ):
+                    children.append(" ")
         return children
 
     def get(self, *args: Type[T]) -> Iterator[T]:
@@ -75,13 +82,13 @@ class Node:
                 tag = cast(T, tag)
                 yield tag
 
-    def get_except(self, *args: Type['Node']) -> Iterator[Union[str, 'Node']]:
+    def get_except(self, *args: Type["Node"]) -> Iterator[Union[str, "Node"]]:
         for tag in self.children:
             if tag.__class__ not in args:
                 yield tag
 
     def get_recursive(self, *args: Type[T]) -> Iterator[T]:
-        if not hasattr(self, 'children'):
+        if not hasattr(self, "children"):
             return
         for tag in self.children:
             if tag.__class__ in args:
@@ -105,7 +112,7 @@ class Node:
         pass
 
     def main_word(self) -> str:
-        kap = getattr(self, 'kap', '')
+        kap = getattr(self, "kap", "")
         if not kap:
             kap = self.get_ancestor(Art).kap[0]
         return add_hats(kap.strip())
@@ -175,18 +182,18 @@ class Art(Node):
     def __init__(self, node: ET.Element, extra_info=None):
         if extra_info is None:
             extra_info = {}
-        assert node.tag == 'art'
-        rad = node.find('kap/rad')
+        assert node.tag == "art"
+        rad = node.find("kap/rad")
         if rad is None:
             raise
-        tail = ''
+        tail = ""
         if rad.tail:
             tail = rad.tail.strip()
         self.kap = (rad.text, tail)
-        extra_info['radix'] = self.kap[0]
+        extra_info["radix"] = self.kap[0]
         super().__init__(node, extra_info)
 
-    def derivations(self) -> Iterator[Union['Subart', 'Drv']]:
+    def derivations(self) -> Iterator[Union["Subart", "Drv"]]:
         for subart in self.get(Subart):
             for drv in subart.derivations():
                 yield drv
@@ -195,7 +202,7 @@ class Art(Node):
         assert not list(self.get(Snc))
 
     def to_text(self):
-        raise Exception('Do not use Art.to_text() directly')
+        raise Exception("Do not use Art.to_text() directly")
 
 
 class Kap(TextNode):
@@ -221,7 +228,7 @@ class Vspec(TextNode):
 
 class Ofc(TextNode):
     def to_text(self) -> StringWithFormat:
-        return StringWithFormat('')
+        return StringWithFormat("")
 
 
 class Var(TextNode):
@@ -231,10 +238,10 @@ class Var(TextNode):
 class Subart(TextNode):
     def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.mrk = ''
-        self.kap = ''
+        self.mrk = ""
+        self.kap = ""
 
-    def derivations(self) -> Iterator[Union['Subart', 'Drv']]:
+    def derivations(self) -> Iterator[Union["Subart", "Drv"]]:
         # Note that this method sometimes will return the subart node
         drvs = list(self.get(Drv))
         if len(drvs) == 1:
@@ -254,10 +261,10 @@ class Subart(TextNode):
 
 class Drv(Node):
     def __init__(self, node: ET.Element, extra_info=None):
-        self.mrk = node.get('mrk') or ''
+        self.mrk = node.get("mrk") or ""
         if not extra_info:
             extra_info = {}
-        kap_node = node.find('kap')
+        kap_node = node.find("kap")
         assert kap_node is not None
         kap = Kap(kap_node, extra_info)
         self.kap = kap.to_text().string
@@ -269,7 +276,7 @@ class Drv(Node):
         n_sncs = len(list(self.get(Snc)))
         for n, snc in enumerate(self.get(Snc)):
             if n_sncs > 1:
-                text = StringWithFormat("%s. " % (n+1,))
+                text = StringWithFormat("%s. " % (n + 1,))
                 text += snc.to_text()
             else:
                 text = snc.to_text()
@@ -281,26 +288,26 @@ class Drv(Node):
 
         # Kap and Fnt ignored
         for node in self.get(Gra, Uzo, Dif, Ref):
-            if isinstance(node, Ref) and node.tip != 'dif':
+            if isinstance(node, Ref) and node.tip != "dif":
                 continue
             content += node.to_text()
             if isinstance(node, Gra):
-                content += ' '
+                content += " "
 
         meanings = self.read_snc()
 
         for nn, subdrv in letter_enumerate(self.get(Subdrv)):
             text = subdrv.to_text()
             text.prepend("%s. " % nn.upper())
-            if nn == 'a' and (meanings or len(content)):
-                text.prepend('\n\n')
+            if nn == "a" and (meanings or len(content)):
+                text.prepend("\n\n")
             meanings.append(text)
 
-        content += StringWithFormat.join(meanings, '\n\n')
+        content += StringWithFormat.join(meanings, "\n\n")
 
         # Renaming node2 to node causes issues with mypy
         for node2 in self.get_except(Subdrv, Snc, Gra, Uzo, Fnt, Kap, Dif, Mlg):
-            if isinstance(node2, Ref) and node2.tip == 'dif':
+            if isinstance(node2, Ref) and node2.tip == "dif":
                 continue
             if isinstance(node2, str):
                 # Nodes added by hand in add_whitespace_nodes_to_children
@@ -321,7 +328,7 @@ class Subdrv(Node):
 
         # Fnt omitted
         for node in self.get(Dif, Gra, Uzo, Ref):
-            if isinstance(node, Ref) and node.tip != 'dif':
+            if isinstance(node, Ref) and node.tip != "dif":
                 continue
             content += node.to_text()
 
@@ -332,7 +339,7 @@ class Subdrv(Node):
             content += text
 
         for text_node in self.get_except(Snc, Gra, Uzo, Fnt, Dif, Ref):
-            if isinstance(text_node, Ref) and text_node.tip == 'dif':
+            if isinstance(text_node, Ref) and text_node.tip == "dif":
                 continue
             if isinstance(text_node, str):
                 raise
@@ -342,11 +349,11 @@ class Subdrv(Node):
 
 class Snc(Node):
     def __init__(self, node, extra_info=None):
-        self.mrk = node.get('mrk')
+        self.mrk = node.get("mrk")
         if not extra_info:
             extra_info = {}
         # example: snc without mrk but drv has it (see zoni in zon.xml)
-        self.mrk = self.mrk or extra_info['radix']
+        self.mrk = self.mrk or extra_info["radix"]
         super().__init__(node, extra_info)
 
     def to_text(self) -> StringWithFormat:
@@ -354,24 +361,24 @@ class Snc(Node):
 
         # Fnt ignored
         for node in self.get(Gra, Uzo, Dif, Ref):
-            if isinstance(node, Ref) and node.tip != 'dif':
+            if isinstance(node, Ref) and node.tip != "dif":
                 continue
             content += node.to_text()
             if isinstance(node, Gra):
-                content += ' '
+                content += " "
 
         if list(self.get(Subsnc)):
-            content += '\n\n'
+            content += "\n\n"
             subs = []
             for n, subsnc in letter_enumerate(self.get(Subsnc)):
                 text = subsnc.to_text()
                 text.prepend("%s) " % n)
                 subs.append(text)
-            content += StringWithFormat.join(subs, '\n\n')
+            content += StringWithFormat.join(subs, "\n\n")
 
         # Renaming node2 to node causes issues with mypy
         for node2 in self.get_except(Gra, Uzo, Fnt, Dif, Subsnc):
-            if isinstance(node2, Ref) and node2.tip == 'dif':
+            if isinstance(node2, Ref) and node2.tip == "dif":
                 continue
             if isinstance(node2, str):
                 # Nodes added by hand in add_whitespace_nodes_to_children
@@ -385,19 +392,19 @@ class Snc(Node):
 class Subsnc(TextNode):
     def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.mrk = node.get('mrk')
+        self.mrk = node.get("mrk")
 
 
 class Uzo(TextNode):
     def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.tip = node.get('tip')
-        if self.tip == 'fak':
+        self.tip = node.get("tip")
+        if self.tip == "fak":
             self.base_format = Format.UZO_FAKO
 
     def to_text(self) -> StringWithFormat:
         text = super().to_text()
-        if self.tip == 'stl':
+        if self.tip == "stl":
             mapping = {
                 "FRAZ": "(frazaĵo)",
                 "FIG": "(figure)",
@@ -407,10 +414,10 @@ class Uzo(TextNode):
                 "ARK": "(arkaismo)",
                 "EVI": "(evitinde)",
                 "KOMUNE": "(komune)",
-                "NEO": "(neologismo)"
+                "NEO": "(neologismo)",
             }
             text = StringWithFormat(mapping.get(text.string, text.string))
-        return text + ' '
+        return text + " "
 
 
 class Dif(TextNode):
@@ -419,7 +426,7 @@ class Dif(TextNode):
 
 class Tezrad(Node):
     def to_text(self) -> StringWithFormat:
-        return StringWithFormat('')
+        return StringWithFormat("")
 
 
 # TODO link to url
@@ -435,13 +442,13 @@ class Lstref(TextNode):
 class Trd(TextNode):
     def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.lng = node.get('lng') or ''
+        self.lng = node.get("lng") or ""
 
     # abel.xml has a trd inside a dif
     def to_text(self) -> StringWithFormat:
         if isinstance(self.parent, Dif):
             return super().to_text()
-        return StringWithFormat('')
+        return StringWithFormat("")
 
     def parse_trd(self) -> Tuple[str, str]:
         return (self.lng, super().to_text().string)
@@ -449,11 +456,11 @@ class Trd(TextNode):
 
 class Trdgrp(Node):
     def __init__(self, node: ET.Element, extra_info=None):
-        self.lng = node.get('lng') or ''
+        self.lng = node.get("lng") or ""
         super().__init__(node, extra_info)
 
     def to_text(self) -> StringWithFormat:
-        return StringWithFormat('')
+        return StringWithFormat("")
 
     def parse_trd(self) -> Tuple[str, List[str]]:
         return (self.lng, [trd.parse_trd()[1] for trd in self.get(Trd)])
@@ -464,21 +471,22 @@ class Ref(TextNode):
     def add_arrow(tip: Optional[str], text: StringWithFormat) -> StringWithFormat:
         if not tip:
             return text
-        symbol = '→'
-        if tip == 'dif':
-            symbol = '='
-        content = StringWithFormat(symbol + ' ')
+        symbol = "→"
+        if tip == "dif":
+            symbol = "="
+        content = StringWithFormat(symbol + " ")
         content += text
         return content
 
     def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.tip = node.get('tip')
+        self.tip = node.get("tip")
 
     def to_text(self) -> StringWithFormat:
         if isinstance(self.parent, (Dif, Rim, Ekz, Klr)):
             return super().to_text()
         return Ref.add_arrow(self.tip, super().to_text())
+
     #     symbol = "→"
     #     if self.tip == 'malprt':
     #         symbol = "↗"
@@ -492,7 +500,7 @@ class Ref(TextNode):
 class Refgrp(TextNode):
     def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.tip = node.get('tip')
+        self.tip = node.get("tip")
 
     def to_text(self) -> StringWithFormat:
         if isinstance(self.parent, (Dif, Rim, Ekz, Klr)):
@@ -505,7 +513,7 @@ class Sncref(TextNode):
 
 
 class Ekz(TextNode):
-    base_format = (Format.EKZ)
+    base_format = Format.EKZ
 
     def to_text(self) -> StringWithFormat:
         content = super().to_text()
@@ -515,20 +523,22 @@ class Ekz(TextNode):
 
 class Tld(Node):
     def __init__(self, node: ET.Element, extra_info=None):
-        self.radix = ''
-        self.lit = node.get('lit') or ''
+        self.radix = ""
+        self.lit = node.get("lit") or ""
         if extra_info:
-            self.radix = extra_info.get('radix') or ''
+            self.radix = extra_info.get("radix") or ""
         self.radix = self.radix.strip()
-        self.parent = extra_info.get('parent')
+        self.parent = extra_info.get("parent")
 
     def to_text(self) -> StringWithFormat:
         content = None
         if self.lit and self.radix:
             content = StringWithFormat(self.lit + self.radix[1:])
         else:
-            content = StringWithFormat(self.radix or '-----')
-        if isinstance(self.parent, Ekz) or (self.parent and isinstance(self.parent.parent, Ekz)):
+            content = StringWithFormat(self.radix or "-----")
+        if isinstance(self.parent, Ekz) or (
+            self.parent and isinstance(self.parent.parent, Ekz)
+        ):
             content = content.apply_format(Format.TLD)
         return content
 
@@ -541,7 +551,7 @@ class Klr(TextNode):
 class Rim(TextNode):
     def __init__(self, node: ET.Element, extra_info=None):
         super().__init__(node, extra_info)
-        self.num = node.get('num') or ''
+        self.num = node.get("num") or ""
 
     def to_text(self) -> StringWithFormat:
         string = super().to_text()
@@ -559,7 +569,7 @@ class Aut(TextNode):
 
 class Fnt(Node):
     def to_text(self) -> StringWithFormat:
-        return StringWithFormat('')
+        return StringWithFormat("")
 
 
 # found in zon.xml
@@ -621,18 +631,18 @@ class Baz(TextNode):
 def entities_dict() -> Dict[str, str]:
     entities: Dict[str, str] = {}
 
-    base_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'revo', 'dtd')
-    with open(os.path.join(base_dir, 'vokosgn.dtd'), 'rb') as f:
+    base_dir = os.path.join(os.path.dirname(__file__), "..", "..", "revo", "dtd")
+    with open(os.path.join(base_dir, "vokosgn.dtd"), "rb") as f:
         dtd = etree.DTD(f)
         for entity in dtd.iterentities():
             entities[entity.name] = entity.content
 
-    with open(os.path.join(base_dir, 'vokourl.dtd'), 'rb') as f:
+    with open(os.path.join(base_dir, "vokourl.dtd"), "rb") as f:
         dtd = etree.DTD(f)
         for entity in dtd.iterentities():
             entities[entity.name] = entity.content
 
-    with open(os.path.join(base_dir, 'vokomll.dtd'), 'rb') as f:
+    with open(os.path.join(base_dir, "vokomll.dtd"), "rb") as f:
         dtd = etree.DTD(f)
         for entity in dtd.iterentities():
             entities[entity.name] = entity.content
@@ -648,20 +658,20 @@ def parse_article(filename: str) -> Art:
         xml_parser.entity[entity] = value
     tree = ET.fromstring(article, parser=xml_parser)
 
-    art = tree.find('art')
+    art = tree.find("art")
     if not art:
-        raise Exception('XML file does not contain <art> tag!')
+        raise Exception("XML file does not contain <art> tag!")
     return Art(art)
 
 
 @click.command()
-@click.argument('word')
+@click.argument("word")
 def main(word):
-    art = parse_article('xml/%s.xml' % word)
+    art = parse_article("xml/%s.xml" % word)
     print(art)
     print()
     print(art.to_text())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
