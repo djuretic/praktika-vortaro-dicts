@@ -2,6 +2,7 @@ import fire
 from . import process_revo
 from .utils import list_languages
 from .search import search_multiple, stats
+from typing import Optional
 
 
 class Vortaro(object):
@@ -16,10 +17,10 @@ class Vortaro(object):
 
     def process_revo(
         self,
-        word: str = None,
-        xml_file: str = None,
+        word: Optional[str] = None,
+        xml_file: Optional[str] = None,
         output_db: str = "vortaro.db",
-        limit: int = None,
+        limit: Optional[int] = None,
         verbose: bool = False,
         dry_run: bool = False,
         min_entries_to_include_lang: int = 100,

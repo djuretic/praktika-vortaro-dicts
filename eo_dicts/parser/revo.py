@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
+from abc import abstractmethod
 from typing import Union, List, Tuple, Dict, Iterator, Optional, Type, TypeVar, cast
 
 
@@ -108,6 +109,7 @@ class Node:
             return parent
         return self.parent.get_ancestor(*args)
 
+    @abstractmethod
     def to_text(self) -> StringWithFormat:
         pass
 
@@ -115,6 +117,8 @@ class Node:
         kap = getattr(self, "kap", "")
         if not kap:
             kap = self.get_ancestor(Art).kap[0]
+        if kap is None:
+            return ""
         return add_hats(kap.strip())
 
     def translations(self) -> Dict[str, Dict[str, Dict[Optional[int], List[str]]]]:
