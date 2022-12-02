@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Dict, List, Tuple, Union
+from typing import Optional, Dict, List, Tuple, Union, Self
 
 
 class Format(Enum):
@@ -26,7 +26,7 @@ class StringWithFormat:
             base += string
         return base
 
-    def add(self, other, format_type=None, keep_whitespace=False) -> "StringWithFormat":
+    def add(self, other, format_type=None, keep_whitespace=False) -> Self:
         # print('ADD', repr(self), repr(self.format), repr(other), format_type)
         if format_type and format_type.value not in self.format:
             self.format[format_type.value] = []
@@ -67,15 +67,15 @@ class StringWithFormat:
             self.string += other
         return self
 
-    def add_italic(self, other) -> "StringWithFormat":
+    def add_italic(self, other) -> Self:
         return self.add(other, Format.ITALIC)
 
-    def add_bold(self, other) -> "StringWithFormat":
+    def add_bold(self, other) -> Self:
         return self.add(other, Format.BOLD)
 
     def apply_format(
         self, format_type: Union[List, Tuple, Format, None]
-    ) -> "StringWithFormat":
+    ) -> Self:
         if not format_type:
             return self
         if isinstance(format_type, (list, tuple)):
@@ -87,16 +87,16 @@ class StringWithFormat:
             self.format[format_type.value].append((0, len(self.string)))
         return self
 
-    def __add__(self, other) -> "StringWithFormat":
+    def __add__(self, other) -> Self:
         return self.add(other)
 
-    def prepend(self, other) -> "StringWithFormat":
+    def prepend(self, other) -> Self:
         alt = StringWithFormat(other).add(self)
         self.string = alt.string
         self.format = alt.format
         return self
 
-    def strip(self) -> "StringWithFormat":
+    def strip(self) -> Self:
         original = self.string
         base_len = len(original)
         new_format = dict(self.format)

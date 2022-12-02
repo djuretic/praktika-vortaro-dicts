@@ -13,6 +13,7 @@ eo-dicts = {editable = true, path = "."}
 black = "==21.6b0"
 ipython = "*"
 pytest = "*"
+mypy = "*"
 
 [requires]
 python_version = "3.11"
