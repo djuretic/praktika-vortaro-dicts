@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eo_dicts"
+version = "0.1"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+include = ["eo_dicts"]
+exclude = ["eo_dicts.tests"]
+
+[project.scripts]
+process_revo = "eo_dicts.process_revo:main"
+praktika_vortaro = "eo_dicts.cli:main"

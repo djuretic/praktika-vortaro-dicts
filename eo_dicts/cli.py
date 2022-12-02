@@ -1,7 +1,7 @@
 import fire
-from eo_dicts import process_revo
-from eo_dicts.utils import list_languages
-from eo_dicts.search import search_multiple, stats
+from . import process_revo
+from .utils import list_languages
+from .search import search_multiple, stats
 
 
 class Vortaro(object):
@@ -35,5 +35,9 @@ class Vortaro(object):
         )
 
 
-if __name__ == "__main__":
+def main():
     fire.Fire(Vortaro)
+
+
+if __name__ == "__main__":
+    main()

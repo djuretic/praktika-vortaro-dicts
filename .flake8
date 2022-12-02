@@ -1,0 +1,3 @@
+# still no support for pyproject.toml :(
+[flake8]
+max-line-length = 102
