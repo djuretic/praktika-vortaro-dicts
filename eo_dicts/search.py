@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import humanize
 from .utils import output_dir
 
 
@@ -39,6 +40,9 @@ def stats() -> None:
     try:
         cursor.execute("SELECT * FROM version")
         print("Version:", cursor.fetchone()[0])
+
+        file_size = os.path.getsize(db_filename)
+        print("Size:", humanize.naturalsize(file_size), "-", file_size)
 
         cursor.execute("SELECT COUNT(*) FROM words")
         print("Words:", cursor.fetchone()[0])
