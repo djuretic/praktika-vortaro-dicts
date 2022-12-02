@@ -5,7 +5,7 @@ from lxml import etree
 from ..utils import add_hats, letter_enumerate
 from .string_with_format import StringWithFormat, Format
 from abc import abstractmethod
-from typing import Union, List, Tuple, Dict, Iterator, Optional, Type, TypeVar, cast
+from typing import Union, Iterator, Optional, Type, TypeVar, cast
 
 
 T = TypeVar("T", bound="Node")
@@ -22,13 +22,14 @@ def remove_extra_whitespace(string: str) -> str:
 
 
 class Node:
-    def __init__(self, node: ET.Element, extra_info=None):
+    def __init__(
+        self, node: ET.Element, extra_info: Optional[dict[str, "Node"]] = None
+    ):
         if extra_info is None:
             extra_info = {}
         self.parent: Optional["Node"] = extra_info.get("parent")
-        self.children: List[Union[str, "Node"]]
+        self.children: list[Union[str, "Node"]]
         self.parse_children(node, extra_info)
-        self.text = None
 
     def __repr__(self):
         keys = " ".join(
@@ -38,7 +39,7 @@ class Node:
         )
         return "<%s %s>" % (self.__class__.__name__, keys)
 
-    def parse_children(self, node: ET.Element, extra_info: Dict[str, "Node"]) -> None:
+    def parse_children(self, node: ET.Element, extra_info: dict[str, "Node"]) -> None:
         self.children = []
         if node.text and node.text.strip():
             self.children.append(remove_extra_whitespace(node.text))
@@ -55,7 +56,7 @@ class Node:
         self.children = self.add_whitespace_nodes_to_children()
         # print(node.tag, '- children:', self.children)
 
-    def add_whitespace_nodes_to_children(self) -> List[Union[str, "Node"]]:
+    def add_whitespace_nodes_to_children(self) -> list[Union[str, "Node"]]:
         children = []
         for n, child in enumerate(self.children):
             children.append(child)
@@ -121,8 +122,8 @@ class Node:
             return ""
         return add_hats(kap.strip())
 
-    def translations(self) -> Dict[str, Dict[str, Dict[Optional[int], List[str]]]]:
-        trds: Dict[str, Dict[str, Dict[Optional[int], List[str]]]] = {}
+    def translations(self) -> dict[str, dict[str, dict[Optional[int], list[str]]]]:
+        trds: dict[str, dict[str, dict[Optional[int], list[str]]]] = {}
         for tag in self.get_recursive(Trd, Trdgrp):
             if not isinstance(tag.parent, (Drv, Snc)):
                 continue
@@ -161,7 +162,7 @@ class Node:
 
 class TextNode(Node):
     # Format enum, can also be a list
-    base_format: Union[List, Format, None] = None
+    base_format: Union[list, Format, None] = None
 
     def to_text(self) -> StringWithFormat:
         parts = []
@@ -275,7 +276,7 @@ class Drv(Node):
         super().__init__(node, extra_info)
         self.parse_children(node, extra_info)
 
-    def read_snc(self) -> List[StringWithFormat]:
+    def read_snc(self) -> list[StringWithFormat]:
         meanings = []
         n_sncs = len(list(self.get(Snc)))
         for n, snc in enumerate(self.get(Snc)):
@@ -454,7 +455,7 @@ class Trd(TextNode):
             return super().to_text()
         return StringWithFormat("")
 
-    def parse_trd(self) -> Tuple[str, str]:
+    def parse_trd(self) -> tuple[str, str]:
         return (self.lng, super().to_text().string)
 
 
@@ -466,7 +467,7 @@ class Trdgrp(Node):
     def to_text(self) -> StringWithFormat:
         return StringWithFormat("")
 
-    def parse_trd(self) -> Tuple[str, List[str]]:
+    def parse_trd(self) -> tuple[str, list[str]]:
         return (self.lng, [trd.parse_trd()[1] for trd in self.get(Trd)])
 
 
@@ -632,8 +633,8 @@ class Baz(TextNode):
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
-def entities_dict() -> Dict[str, str]:
-    entities: Dict[str, str] = {}
+def entities_dict() -> dict[str, str]:
+    entities: dict[str, str] = {}
 
     base_dir = os.path.join(os.path.dirname(__file__), "..", "..", "revo", "dtd")
     with open(os.path.join(base_dir, "vokosgn.dtd"), "rb") as f:

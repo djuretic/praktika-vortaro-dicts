@@ -3,7 +3,7 @@ import sqlite3
 import glob
 import itertools
 import json
-from typing import List, Dict, TypedDict, Optional
+from typing import TypedDict, Optional
 
 from .utils import get_languages, get_disciplines, output_dir
 from .parser import revo
@@ -16,7 +16,7 @@ class DefinitionDict(TypedDict):
     mark: str
     definition: str
     format: str
-    trads: Dict
+    trads: dict
     position: int
     definition_id: Optional[int]
 
@@ -27,9 +27,9 @@ class EntryDict(TypedDict):
     definition: DefinitionDict
 
 
-def insert_translations(trads: List[Dict], cursor: sqlite3.Cursor) -> None:
+def insert_translations(trads: list[dict], cursor: sqlite3.Cursor) -> None:
     # flatten
-    all_trans: List[Dict] = []
+    all_trans: list[dict] = []
     for translation in trads:
         for snc_index, words in translation["data"].items():
             for word in words:
@@ -98,7 +98,7 @@ def create_db(output_db: str) -> sqlite3.Connection:
     return conn
 
 
-def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: Dict) -> None:
+def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: dict) -> None:
     cursor.execute(
         """
         CREATE TABLE languages (
@@ -171,7 +171,7 @@ def create_version_table(cursor: sqlite3.Cursor) -> None:
 
 def parse_article(
     filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False
-) -> List[EntryDict]:
+) -> list[EntryDict]:
     art = None
     try:
         art = revo.parse_article(filename)
@@ -180,7 +180,7 @@ def parse_article(
         raise
 
     found_words = []
-    entries: List[EntryDict] = []
+    entries: list[EntryDict] = []
     has_subart = False
     drvs = list(art.derivations())
     for pos, drv in enumerate(drvs, 1):
@@ -237,14 +237,14 @@ def create_index(cursor: sqlite3.Cursor) -> None:
     cursor.execute("CREATE INDEX index_definition_id_words ON words (definition_id)")
 
 
-def write_stats(entries_per_lang: Dict) -> None:
+def write_stats(entries_per_lang: dict) -> None:
     base_dir = os.path.dirname(__file__)
     with open(os.path.join(base_dir, "..", "stats.json"), "w") as f:
         json.dump(entries_per_lang, f, ensure_ascii=False, indent=4)
 
 
 def insert_entries(
-    entries: List[EntryDict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int
+    entries: list[EntryDict], cursor: sqlite3.Cursor, min_entries_to_include_lang: int
 ) -> None:
     entries = sorted(entries, key=lambda x: x["word"].lower())
     translations = []
@@ -315,7 +315,7 @@ def main(
     if not dry_run:
         create_disciplines_tables(cursor)
 
-    entries: List[EntryDict] = []
+    entries: list[EntryDict] = []
     try:
         files = []
         if xml_file:

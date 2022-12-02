@@ -1,20 +1,24 @@
 from enum import Enum
+
 # not using tpying.Self because mypy doesn't support it yet
-from typing import Optional, Dict, List, Tuple, Union
+from typing import Optional, Union
 
 
 class Format(Enum):
     ITALIC = "italic"
     BOLD = "bold"
+    # Example sentence
     EKZ = "ekz"
+    # Headword
     TLD = "tld"
+    # Example: GEOG POL
     UZO_FAKO = "fako"
 
 
 class StringWithFormat:
     def __init__(self, string: Optional[str] = None):
         self.string = string or ""
-        self.format: Dict = {}
+        self.format: dict[str, list[tuple[int, int]]] = {}
 
     @classmethod
     def join(cls, string_list, separator):
@@ -50,9 +54,7 @@ class StringWithFormat:
                     # merge two formats in one
                     self.format[fmt][-1] = (self.format[fmt][-1][0], n + fmt_list[0][1])
                     fmt_list = fmt_list[1:]
-                self.format[fmt] += [
-                    tuple(map(lambda x: x + n, indexes)) for indexes in fmt_list
-                ]
+                self.format[fmt] += [(start + n, end + n) for (start, end) in fmt_list]
         else:
             if format_type:
                 last_format = self.format[format_type.value]
@@ -74,7 +76,9 @@ class StringWithFormat:
     def add_bold(self, other) -> "StringWithFormat":
         return self.add(other, Format.BOLD)
 
-    def apply_format(self, format_type: Union[List, Tuple, Format, None]) -> "StringWithFormat":
+    def apply_format(
+        self, format_type: Union[list, tuple, Format, None]
+    ) -> "StringWithFormat":
         if not format_type:
             return self
         if isinstance(format_type, (list, tuple)):
@@ -139,7 +143,7 @@ class StringWithFormat:
         return len(self.string)
 
 
-def expand_tld(string):
+def expand_tld(string: StringWithFormat) -> StringWithFormat:
     if not isinstance(string, StringWithFormat) or not string.format.get(
         Format.TLD.value
     ):

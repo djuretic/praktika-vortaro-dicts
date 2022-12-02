@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 import os
-from typing import Dict, List, Optional, Iterator, Tuple, TypeVar, Iterable
+from typing import Optional, Iterator, TypeVar, Iterable
 
 T = TypeVar("T")
 
@@ -38,7 +38,7 @@ def add_hats(word: str) -> str:
     return res
 
 
-def get_languages() -> List[Dict[str, Optional[str]]]:
+def get_languages() -> list[dict[str, Optional[str]]]:
     base_dir = os.path.dirname(__file__)
     xml_path = os.path.join(base_dir, "..", "revo", "cfg", "lingvoj.xml")
     tree = ET.parse(xml_path)
@@ -49,7 +49,7 @@ def get_languages() -> List[Dict[str, Optional[str]]]:
     return [{"code": lang.get("kodo"), "name": lang.text} for lang in langs]
 
 
-def get_disciplines() -> Dict[str, Optional[str]]:
+def get_disciplines() -> dict[str, Optional[str]]:
     base_dir = os.path.dirname(__file__)
     xml_path = os.path.join(base_dir, "..", "revo", "cfg", "fakoj.xml")
     tree = ET.parse(xml_path)
@@ -62,7 +62,7 @@ def list_languages() -> None:
         print(n, lang["code"], lang["name"])
 
 
-def letter_enumerate(iterable: Iterable[T]) -> Iterator[Tuple[str, T]]:
+def letter_enumerate(iterable: Iterable[T]) -> Iterator[tuple[str, T]]:
     for n, elem in enumerate(iterable):
         yield (chr(ord("a") + n), elem)
 
