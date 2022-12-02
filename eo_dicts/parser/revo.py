@@ -162,10 +162,10 @@ class Node:
 
 class TextNode(Node):
     # Format enum, can also be a list
-    base_format: Union[list, Format, None] = None
+    base_format: Union[list[Format], Format, None] = None
 
     def to_text(self) -> StringWithFormat:
-        parts = []
+        parts: list[StringWithFormat] = []
         for node in self.children:
             if isinstance(node, str):
                 parts.append(StringWithFormat(node))

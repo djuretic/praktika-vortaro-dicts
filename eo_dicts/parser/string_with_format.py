@@ -21,7 +21,9 @@ class StringWithFormat:
         self.format: dict[str, list[tuple[int, int]]] = {}
 
     @classmethod
-    def join(cls, string_list, separator):
+    def join(
+        cls, string_list: list["StringWithFormat"], separator: str
+    ) -> "StringWithFormat":
         if len(string_list) == 0:
             return StringWithFormat()
         base = string_list[0]
@@ -31,7 +33,12 @@ class StringWithFormat:
             base += string
         return base
 
-    def add(self, other, format_type=None, keep_whitespace=False) -> "StringWithFormat":
+    def add(
+        self,
+        other: Union[str, "StringWithFormat"],
+        format_type: Optional[Format] = None,
+        keep_whitespace=False,
+    ) -> "StringWithFormat":
         # print('ADD', repr(self), repr(self.format), repr(other), format_type)
         if format_type and format_type.value not in self.format:
             self.format[format_type.value] = []
@@ -70,14 +77,14 @@ class StringWithFormat:
             self.string += other
         return self
 
-    def add_italic(self, other) -> "StringWithFormat":
+    def add_italic(self, other: Union[str, "StringWithFormat"]) -> "StringWithFormat":
         return self.add(other, Format.ITALIC)
 
-    def add_bold(self, other) -> "StringWithFormat":
+    def add_bold(self, other: Union[str, "StringWithFormat"]) -> "StringWithFormat":
         return self.add(other, Format.BOLD)
 
     def apply_format(
-        self, format_type: Union[list, tuple, Format, None]
+        self, format_type: Union[list[Format], Format, None]
     ) -> "StringWithFormat":
         if not format_type:
             return self
@@ -90,10 +97,10 @@ class StringWithFormat:
             self.format[format_type.value].append((0, len(self.string)))
         return self
 
-    def __add__(self, other) -> "StringWithFormat":
+    def __add__(self, other: Union[str, "StringWithFormat"]) -> "StringWithFormat":
         return self.add(other)
 
-    def prepend(self, other) -> "StringWithFormat":
+    def prepend(self, other: str) -> "StringWithFormat":
         alt = StringWithFormat(other).add(self)
         self.string = alt.string
         self.format = alt.format
