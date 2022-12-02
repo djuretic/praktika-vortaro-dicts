@@ -632,6 +632,16 @@ class Baz(TextNode):
     pass
 
 
+# seen in dank.xml, danke al
+class Mis(TextNode):
+    pass
+
+
+# TODO strikethrough
+class Ts(TextNode):
+    pass
+
+
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 def entities_dict() -> dict[str, str]:
     entities: dict[str, str] = {}

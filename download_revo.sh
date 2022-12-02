@@ -1,7 +1,7 @@
 #/usr/bin/env bash
 set -o errexit
 set -o nounset
-ZIP_URL=$(lynx -nonumbers -dump -listonly https://github.com/revuloj/revo-fonto/releases | grep "tags/" | grep "zip" | head -n1)
+ZIP_URL=$(lynx -nonumbers -dump -listonly https://github.com/revuloj/revo-fonto/tags | grep "tags/" | grep "zip" | head -n1)
 wget -O revoxml.zip $ZIP_URL
 # this will include trailing slash
 ZIP_ROOT_DIR=$(unzip -l revoxml.zip | sed -n "5p" | awk -F" " '{print $4}')
