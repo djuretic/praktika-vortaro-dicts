@@ -73,9 +73,7 @@ class StringWithFormat:
     def add_bold(self, other) -> Self:
         return self.add(other, Format.BOLD)
 
-    def apply_format(
-        self, format_type: Union[List, Tuple, Format, None]
-    ) -> Self:
+    def apply_format(self, format_type: Union[List, Tuple, Format, None]) -> Self:
         if not format_type:
             return self
         if isinstance(format_type, (list, tuple)):
