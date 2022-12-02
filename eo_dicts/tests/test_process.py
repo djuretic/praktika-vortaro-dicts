@@ -2,7 +2,7 @@ import os
 import sqlite3
 import pytest
 from ..utils import output_dir
-from vortaro import Vortaro
+from ..cli import Vortaro
 
 TEST_DB = "test.db"
 XML_BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "revo", "xml")
