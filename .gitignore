@@ -6,9 +6,9 @@
 *.egg-info
 *.json
 __pycache__
+/build
 .cache
 .mypy_cache
 fabfile.py
-docker-compose.yml
-Dockerfile
 xsl.sh
+/misc
