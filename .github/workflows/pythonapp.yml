@@ -39,6 +39,7 @@ jobs:
         pip install mypy
         mypy . --ignore-missing-imports
     - name: Test with pytest
+      # without pipenv run, it doesn't find fire package
       run: |
         pip install pytest
-        pytest -k "not test_process"
+        pipenv run pytest -k "not test_process"
