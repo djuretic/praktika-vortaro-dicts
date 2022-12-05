@@ -47,4 +47,6 @@ def test_process_subart_2(vortaro):
         ("aligi", 2),
         ("aliĝi", 3),
         ("aliĝilo", 4),
+        ("malaliĝi", 5),
+        ("realiĝi", 6),
     ]
