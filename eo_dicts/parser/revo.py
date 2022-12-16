@@ -1,5 +1,6 @@
 import os.path
 import fire
+import functools
 import xml.etree.ElementTree as ET
 from lxml import etree
 from ..utils import add_hats, letter_enumerate
@@ -643,6 +644,7 @@ class Ts(TextNode):
 
 
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
+@functools.cache
 def entities_dict() -> dict[str, str]:
     entities: dict[str, str] = {}
 
