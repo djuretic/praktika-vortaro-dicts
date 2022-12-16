@@ -169,9 +169,7 @@ def create_version_table(cursor: sqlite3.Cursor) -> None:
     cursor.execute("INSERT INTO version (id) values (?)", (version,))
 
 
-def parse_article(
-    filename: str, num_article: int, cursor: sqlite3.Cursor, verbose=False
-) -> list[EntryDict]:
+def parse_article(filename: str, num_article: int, verbose=False) -> list[EntryDict]:
     art = None
     try:
         art = revo.parse_article(filename)
@@ -330,7 +328,7 @@ def main(
         for filename in files:
             if word and word not in filename:
                 continue
-            parsed_entries = parse_article(filename, num_article, cursor, verbose)
+            parsed_entries = parse_article(filename, num_article, verbose)
             entries += parsed_entries
             num_article += 1
 
