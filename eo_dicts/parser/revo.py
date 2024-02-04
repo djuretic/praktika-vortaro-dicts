@@ -643,6 +643,14 @@ class Ts(TextNode):
     pass
 
 
+class Pr(TextNode):
+    pass
+
+
+class Ke(TextNode):
+    pass
+
+
 # https://github.com/sstangl/tuja-vortaro/blob/master/revo/convert-to-js.py
 @functools.cache
 def entities_dict() -> dict[str, str]:
