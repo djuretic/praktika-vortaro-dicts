@@ -1,16 +1,20 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "eo_dicts"
-version = "0.1"
+name = "praktika_vortaro_dicts"
+version = "0.1.0"
 requires-python = ">=3.11"
+dependencies = [
+    "fire>=0.7.0",
+    "humanize>=4.11.0",
+    "lxml>=5.3.0",
+    "typing>=3.10.0.0",
+]
 
-[tool.setuptools.packages.find]
-include = ["eo_dicts"]
-exclude = ["eo_dicts.tests"]
-
-[project.scripts]
-process_revo = "eo_dicts.process_revo:main"
-praktika_vortaro = "eo_dicts.cli:main"
+[dependency-groups]
+dev = [
+    "black==22.10.0",
+    # https://github.com/psf/black/issues/2964
+    "click<=8.1.0",
+    "ipython>=8.31.0",
+    "mypy>=1.14.0",
+    "pytest>=8.3.4",
+]
