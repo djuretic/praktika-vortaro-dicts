@@ -50,9 +50,7 @@ def insert_translations(trads: list[dict], cursor: sqlite3.Cursor) -> None:
         cursor.execute(
             """INSERT INTO translations_{code}
             (definition_id, snc_index, word, translation)
-            VALUES (?,?,?,?)""".format(
-                code=translation["lng"]
-            ),
+            VALUES (?,?,?,?)""".format(code=translation["lng"]),
             (
                 translation["row_id"],
                 translation["snc_index"],
@@ -128,9 +126,7 @@ def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: dict) -> None:
             word text,
             translation text
         )
-        """.format(
-                lang=lang
-            )
+        """.format(lang=lang)
         )
 
         cursor.execute(
@@ -306,7 +302,6 @@ def main(
     dry_run: bool,
     min_entries_to_include_lang: int,
 ) -> None:
-
     conn = create_db(os.path.join(output_dir(), output_db))
     cursor = conn.cursor()
 

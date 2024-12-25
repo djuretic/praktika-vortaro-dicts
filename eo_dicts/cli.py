@@ -1,4 +1,3 @@
-import fire
 from . import process_revo
 from .utils import list_languages
 from .search import search_multiple, stats
@@ -34,11 +33,3 @@ class Vortaro(object):
             dry_run,
             min_entries_to_include_lang,
         )
-
-
-def main():
-    fire.Fire(Vortaro)
-
-
-if __name__ == "__main__":
-    main()

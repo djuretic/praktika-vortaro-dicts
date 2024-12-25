@@ -18,8 +18,14 @@ To download the most recent data files from Revo:
 ```bash
 # you may need 'sudo apt install lynx'
 ./download_revo.sh
-uv sync
 uv run cli.py process_revo
+```
+
+## Formatting code
+
+```bash
+uv tool install ruff
+ruff format .
 ```
 
 ## Tests

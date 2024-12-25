@@ -29,7 +29,7 @@ def test_process_subart(vortaro):
     assert list(res) == [
         ("-an", "an.0", 1),
         ("anaro", "an.0aro", 4),
-        ('ani', 'an.0i', 3),
+        ("ani", "an.0i", 3),
         ("aniĝi", "an.0igxi", 5),
         ("ano", "an.0o", 2),
     ]
