@@ -114,7 +114,18 @@ def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: dict) -> None:
     }
     # Normal sort won't consider ĉ, ŝ, ...,
     # get_languages() gives the correct order
-    langs = sorted(entries_per_lang.keys(), key=lambda x: lang_names[x][0])
+    # Some language codes may appear in entries_per_lang but not in the
+    # lingvoj.xml file (e.g. uncommon or unexpected codes). In that case
+    # fall back to using the code itself as name and a large order so they
+    # appear at the end. Also print a warning to help detect missing codes.
+    def lang_order(code: str) -> int:
+        info = lang_names.get(code)
+        if info is None:
+            print(f"Warning: language code '{code}' not found in lingvoj.xml; using fallback order and name")
+            return 10 ** 6
+        return info[0]
+
+    langs = sorted(entries_per_lang.keys(), key=lang_order)
 
     for lang in langs:
         cursor.execute(
@@ -129,12 +140,15 @@ def create_langs_tables(cursor: sqlite3.Cursor, entries_per_lang: dict) -> None:
         """.format(lang=lang)
         )
 
+        # Use the provided name if available; otherwise fall back to the
+        # language code itself so the DB still contains a readable value.
+        name = lang_names.get(lang, (None, lang))[1]
         cursor.execute(
             """
             INSERT INTO languages (code, name, num_entries)
             VALUES (?, ?, ?)
         """,
-            (lang, lang_names[lang][1], entries_per_lang[lang]),
+            (lang, name, entries_per_lang[lang]),
         )
 
 
